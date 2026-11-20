@@ -132,8 +132,10 @@ function swUnit(mu){var c=Math.cos(mu),s=Math.sin(mu);var a=Math.pow(Math.abs(c)
    own coercivity (M·Ĥ=0 crossing), precomputed once at K=1 (only scales with K). */
 var ENV_C=[];
 function buildCoEnvelope(){
-  var K=1,S=100,gN=720,GG2=TAU/gN,hmax=2.5,down=lin(hmax,-hmax,S);
-  for(var deg=0;deg<=90;deg+=2){
+  var K=1,S=400,gN=540,GG2=TAU/gN,hmax=1.2,down=lin(hmax,-hmax,S);
+  /* locked regime (θ≤45°): coercivity equals the switching field → analytic, exact */
+  for(var deg=0;deg<=45;deg++)ENV_C[deg]=swUnit(deg*Math.PI/180);
+  for(var deg=46;deg<=90;deg++){
     var thH=deg*Math.PI/180,cur0=thH,m0=1,hc=null,arr=new Float64Array(gN);
     for(var j=1;j<S;j++){
       var h=down[j];
@@ -150,8 +152,9 @@ function buildCoEnvelope(){
 }
 function envCdeg(degD){
   var a=((degD%360)+360)%360,p=a%180;if(p>90)p=180-p;
-  var e=Math.round(p/2)*2;if(e>90)e=90;
-  var v=ENV_C[e]!=null?ENV_C[e]:0;
+  var f=Math.min(90,Math.floor(p)),c=Math.min(90,Math.ceil(p)),t=p-f;
+  var v0=ENV_C[f]!=null?ENV_C[f]:0,v1=ENV_C[c]!=null?ENV_C[c]:0;
+  var v=v0+(v1-v0)*t;
   return Math.min(v,swUnit(p*Math.PI/180)); /* coercivity never exceeds switching field */
 }
 
