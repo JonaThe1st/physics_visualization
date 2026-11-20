@@ -27,6 +27,12 @@ button{padding:5px 10px;border:1px solid var(--bd);background:var(--bg);color:va
 .grid .cell{flex:1 1 112px;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:6px 8px}
 .grid .cell .k{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.03em}
 .grid .cell .v{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+/* mobile: stack everything vertically for easier use */
+@media (max-width:720px){
+  .wrap{flex-direction:column;padding:0 12px 16px 56px}
+  .cvbox{max-width:100%;flex-basis:100%;min-width:0}
+  .panel{max-width:100%;flex-basis:auto}
+}
 </style></head><body>
 <h1>Magnetization Reversal (Stoner–Wohlfarth)</h1>
 <div class="sub">Single-domain particle, uniaxial anisotropy, easy axis as reference. Energy ε(θ) = K·sin²θ − 2h·cos(θ−θ<sub>H</sub>), reduced field h = H/H<sub>K</sub>. The magnetization tracks the local energy minimum and jumps when its well disappears. Stronger K ⇒ larger switching field ⇒ open hysteresis; field below h<sub>c</sub> ⇒ reversible rotation. The astroid plots the switching-field envelope in the H<sub>∥</sub>–H<sub>⊥</sub> plane.</div>
@@ -122,6 +128,33 @@ function rebuild(){
 function nowState(){return cur.samples.length?cur.samples[cur.idx]:null;}
 function swUnit(mu){var c=Math.cos(mu),s=Math.sin(mu);var a=Math.pow(Math.abs(c),2/3)+Math.pow(Math.abs(s),2/3);return 1/Math.pow(a,1.5);}
 
+/* Coercive-field envelope h_c(θ)/K, computed numerically exactly like the sim's
+   own coercivity (M·Ĥ=0 crossing), precomputed once at K=1 (only scales with K). */
+var ENV_C=[];
+function buildCoEnvelope(){
+  var K=1,S=100,gN=720,GG2=TAU/gN,hmax=2.5,down=lin(hmax,-hmax,S);
+  for(var deg=0;deg<=90;deg+=2){
+    var thH=deg*Math.PI/180,cur0=thH,m0=1,hc=null,arr=new Float64Array(gN);
+    for(var j=1;j<S;j++){
+      var h=down[j];
+      for(var i=0;i<gN;i++){var t=i*GG2;arr[i]=K*Math.pow(Math.sin(t),2)-2*h*Math.cos(t-thH);}
+      var best=null,bd=1e18,bdm=1e18;
+      for(var i=0;i<gN;i++){var p=arr[(i-1+gN)%gN],c=arr[i],n=arr[(i+1)%gN];
+        if(c<=p&&c<=n){var t=i*GG2,d=relDist(t,cur0),m=Math.cos(t-thH),dm2=Math.abs(m-m0);
+          if(d<bd||(Math.abs(d-bd)<1e-12&&dm2<bdm)){best=t;bd=d;bdm=dm2;}}}
+      cur0=best==null?cur0:best;m0=Math.cos(cur0-thH);
+      if(hc==null&&m0<=0)hc=h;
+    }
+    ENV_C[deg]=hc!=null?Math.abs(hc):0;
+  }
+}
+function envCdeg(degD){
+  var a=((degD%360)+360)%360,p=a%180;if(p>90)p=180-p;
+  var e=Math.round(p/2)*2;if(e>90)e=90;
+  var v=ENV_C[e]!=null?ENV_C[e]:0;
+  return Math.min(v,swUnit(p*Math.PI/180)); /* coercivity never exceeds switching field */
+}
+
 /* ================= drawing helpers ================= */
 function fmt(v,d){return v.toFixed(d);}
 function text(s,x,y,c,fs){ctx.fillStyle=c||col('--fg');ctx.font=(fs||11)+'px system-ui';ctx.fillText(s,x,y);}
@@ -204,30 +237,32 @@ function draw(){
     text('+h',px0+pw-2,py0+ph/2+13,col('--mut'));
   });
 
-  /* ---- BR astroid (switching field + coercivity envelope + config point) ---- */
-  drawP(D,$('as').checked,'Stoner–Wohlfarth astroid  (fields / K)',function(p){
-    var side=Math.min(p.w-28,p.h-70),cx=p.x+p.w/2,cy0=p.y+26+side/2+10,hal=side/2,U=hal/1.6;
+  /* ---- BR astroid: switching-field envelope + coercive-field envelope + 2 points ---- */
+  drawP(D,$('as').checked,'SW astroid — switching & coercive field  (h / K)',function(p){
+    var side=Math.min(p.w-20,p.h-26),hal=side/2,cx=p.x+p.w/2,cy0=p.y+24+hal,U=hal/1.15;
     var PX=t=>cx+t*U, PY=t=>cy0-t*U;
     /* axes */
-    ctx.strokeStyle=col('--bd');ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(PX(-1.5),cy0);ctx.lineTo(PX(1.5),cy0);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(cx,PY(-1.5));ctx.lineTo(cx,PY(1.5));ctx.stroke();
-    text('H∥',PX(1.42),cy0+13,col('--mut'));text('H⊥',cx+7,PY(1.42),col('--mut'));
-    /* astroid |ux|^2/3 + |uy|^2/3 = 1   <=>  param (cos^3 t, sin^3 t) */
-    ctx.strokeStyle=col('--gv');ctx.lineWidth=2;ctx.beginPath();
-    for(var i=0;i<=360;i++){var t=i/360*TAU;var xx=PX(Math.pow(Math.cos(t),3)),yy=PY(Math.pow(Math.sin(t),3));i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);}ctx.stroke();
-    /* ray along θH up to the switching distance f(θH) — static (depends on θH only) */
-    var f=swUnit(thH),bx=Math.cos(thH)*f,by=Math.sin(thH)*f;
-    ctx.strokeStyle=col('--mut');ctx.globalAlpha=.55;ctx.setLineDash([3,3]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx,cy0);ctx.lineTo(PX(bx),PY(by));ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
-    /* switching-field marker on the boundary (hollow cross; static) */
-    ctx.strokeStyle=col('--fg');ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(PX(bx),PY(by),4,0,TAU);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(PX(bx)-5,PY(by));ctx.lineTo(PX(bx)+5,PY(by));ctx.moveTo(PX(bx),PY(by)-5);ctx.lineTo(PX(bx),PY(by)+5);ctx.stroke();
-    text('switching h_s',PX(bx)+7,PY(by)-6,col('--mut'),9);
-    /* current config point (field tip) — moves with h */
-    var ux=H0*Math.cos(thH)/cur.K, uy=H0*Math.sin(thH)/cur.K;
-    var inside=Math.pow(Math.abs(ux),2/3)+Math.pow(Math.abs(uy),2/3)<1;
-    var pc=inside?col('--kp'):col('--k0');
-    ctx.fillStyle=pc;ctx.strokeStyle=col('--bg');ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(PX(ux),PY(uy),6,0,TAU);ctx.fill();ctx.stroke();
-    text('config (h)',PX(ux)+8,PY(uy)-8,col('--mut'),9);
+    ctx.strokeStyle=col('--bd');ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(PX(-1.08),cy0);ctx.lineTo(PX(1.08),cy0);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx,PY(-1.08));ctx.lineTo(cx,PY(1.08));ctx.stroke();
+    text('H∥',PX(1.02),cy0+13,col('--mut'));text('H⊥',cx+6,PY(1.02),col('--mut'));
+    /* switching field envelope (astroid) */
+    ctx.strokeStyle=col('--gv');ctx.lineWidth=2.4;ctx.beginPath();
+    for(var i=0;i<=600;i++){var t=i/600*TAU;var xx=PX(Math.pow(Math.cos(t),3)),yy=PY(Math.pow(Math.sin(t),3));i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);}ctx.stroke();
+    /* coercive field envelope (inner curve) */
+    ctx.strokeStyle=col('--k0');ctx.lineWidth=2.4;ctx.beginPath();
+    for(var i=0;i<=600;i++){var t=i/600*TAU,r=envCdeg(t*180/Math.PI);var xx2=PX(r*Math.cos(t)),yy2=PY(r*Math.sin(t));i?ctx.lineTo(xx2,yy2):ctx.moveTo(xx2,yy2);}ctx.stroke();
+    /* legend */
+    ctx.fillStyle=col('--gv');ctx.font='10px system-ui';ctx.fillText('— switching h_s',cx-hal+4,cy0-hal+14);
+    ctx.fillStyle=col('--k0');ctx.fillText('— coercive h_c',cx-hal+4,cy0-hal+26);
+    /* current field direction θ_H: ray + two points (switching on astroid, coercive on inner) */
+    var f=swUnit(thH),rC=envCdeg(thH*180/Math.PI),axx=Math.cos(thH),ayy=Math.sin(thH);
+    ctx.strokeStyle=col('--mut');ctx.globalAlpha=.5;ctx.setLineDash([3,3]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx,cy0);ctx.lineTo(PX(axx*f),PY(ayy*f));ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+    /* switching point (hollow violet) */
+    ctx.strokeStyle=col('--gv');ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(PX(axx*f),PY(ayy*f),4.5,0,TAU);ctx.stroke();
+    text('h_s',PX(axx*f)+7,PY(ayy*f)-6,col('--gv'),10);
+    /* coercive point (filled green) */
+    ctx.fillStyle=col('--k0');ctx.strokeStyle=col('--bg');ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(PX(axx*rC),PY(ayy*rC),4.5,0,TAU);ctx.fill();ctx.stroke();
+    text('h_c',PX(axx*rC)+7,PY(ayy*rC)-6,col('--k0'),10);
   });
 
   /* ---- readouts ---- */
@@ -237,8 +272,7 @@ function draw(){
   $('rhc').textContent=cur.hc!=null?fmt(Math.abs(cur.hc),3):'—';
   $('rr').textContent=fmt(cur.rem,3);
   $('hcv').textContent=H0.toFixed(2);
-  var ux=H0*Math.cos(thH)/cur.K,uy=H0*Math.sin(thH)/cur.K,inside=Math.pow(Math.abs(ux),2/3)+Math.pow(Math.abs(uy),2/3)<1;
-  $('fold').textContent='switch h_s/K = '+fmt(swUnit(thH),3)+'   |h|/K = '+fmt(Math.abs(H0)/cur.K,3)+'   → '+(inside?'inside astroid, metastable':'past switching, saturated');
+  $('fold').textContent='h_s/K = '+fmt(swUnit(thH),3)+'   h_c/K = '+fmt(envCdeg(thH*180/Math.PI),3)+'   |h|/K = '+fmt(Math.abs(H0)/cur.K,3);
 }
 
 /* ================= interaction / animation ================= */
@@ -291,6 +325,7 @@ function advance(t){
 }
 function sizeUp(){dpr=window.devicePixelRatio||1;cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;}
 sizeUp();new ResizeObserver(sizeUp).observe(cv);
+buildCoEnvelope();
 reset();
 requestAnimationFrame(advance);
 </script>
