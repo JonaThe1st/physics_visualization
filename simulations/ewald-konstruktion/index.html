@@ -50,7 +50,8 @@ button{padding:5px 10px;border:1px solid var(--bd);background:var(--bg);color:va
     <label><input type="checkbox" id="lim" checked> Begrenzungskugel (2k)</label>
     <label><input type="checkbox" id="idx" checked> Indizes</label>
     <label><input type="checkbox" id="axs" autocomplete="off" checked> Kristallachsen (a*, b*, c*)</label>
-    <label><input type="checkbox" id="cel" autocomplete="off" checked> Elementarzelle</label>
+    <label><input type="checkbox" id="cel" autocomplete="off" checked> Elementarzelle (real, Inset unten rechts)</label>
+    <label><input type="checkbox" id="rcl" autocomplete="off" checked> Reziproke Elementarzelle (am Ursprung)</label>
     <button id="rst">Zurücksetzen</button>
    </div>
   </div>
@@ -101,11 +102,17 @@ function draw(){const w=cv.clientWidth,h=cv.clientHeight,cs=getComputedStyle(doc
    ctx.globalAlpha=.85;arrow(a,O,ac[i],1,[2,3]);arrow(O,b,ac[i],2.4);ctx.globalAlpha=1;
    ctx.fillStyle=ac[i];ctx.fillText(n,b[0]+6,b[1]-6);
    ctx.fillStyle=ac[i];for(let t=1;t<=Math.floor(Lx/nb);t++){const q=P(v.map(x=>x*t*nb));ctx.fillRect(q[0]-1.5,q[1]-1.5,3,3);}});}
+ if($('rcl').checked){const Bq=(ST[mode][$('st').value]||ST[mode].sc||ST[mode].sq).B,dm=d3?3:2,Vq=[],Eq=[];
+  for(let i=0;i<(1<<dm);i++){const p=[0,0,0];for(let b=0;b<dm;b++)if((i>>b)&1)for(let m=0;m<3;m++)p[m]+=Bq[b][m];Vq.push(P(mv(R,p)));}
+  for(let i=0;i<(1<<dm);i++)for(let b=0;b<dm;b++)if(!((i>>b)&1))Eq.push([i,i|(1<<b)]);
+  if(!d3){ctx.fillStyle='#e8b400';ctx.globalAlpha=.12;ctx.beginPath();[0,1,3,2].forEach((j,n)=>n?ctx.lineTo(Vq[j][0],Vq[j][1]):ctx.moveTo(Vq[j][0],Vq[j][1]));ctx.fill();}
+  ctx.strokeStyle='#e8b400';ctx.lineWidth=1;ctx.globalAlpha=.85;
+  for(const [i,j] of Eq){ctx.beginPath();ctx.moveTo(Vq[i][0],Vq[i][1]);ctx.lineTo(Vq[j][0],Vq[j][1]);ctx.stroke();}ctx.globalAlpha=1;}
  const it=[],hits=[];
  for(const p of pts){const G=mv(R,p.g),d=Math.hypot(G[0]-C[0],G[1]-C[1],G[2]-C[2])-k,hit=Math.abs(d)<tol&&p.n>1e-9,q=P(G);const o={q,G,hit,p};it.push(o);if(hit)hits.push(o);}
  if(d3)it.sort((a,b)=>b.q[2]-a.q[2]);
  ctx.fillStyle=col('--pt');
- for(const o of it){if(o.hit)continue;ctx.globalAlpha=d3?Math.max(.15,Math.min(.9,.55-.4*o.q[2]/(2*k))):.9;const z=d3?2.6:3.6;ctx.fillRect(o.q[0]-z/2,o.q[1]-z/2,z,z);}
+ for(const o of it){if(o.hit)continue;ctx.globalAlpha=d3?Math.max(.15,Math.min(.9,.55-.4*o.q[2]/(2*k))):.9;const z=d3?5:6.5;ctx.beginPath();ctx.arc(o.q[0],o.q[1],z/2,0,7);ctx.fill();}
  ctx.globalAlpha=1;
  // Strahlen
  arrow(PC,O,col('--k0'),2.8);
@@ -129,16 +136,19 @@ function drawCell(w,h,R,Rv,d3,col){
  else{V=[];for(let i=0;i<8;i++)V.push([i&1,(i>>1)&1,(i>>2)&1]);for(let i=0;i<8;i++)for(let b=0;b<3;b++)if(!((i>>b)&1))E.push([i,i|(1<<b)]);
   if(k=='bcc')X=[[.5,.5,.5]];if(k=='fcc')X=[[.5,.5,0],[.5,.5,1],[.5,0,.5],[.5,1,.5],[0,.5,.5],[1,.5,.5]];O=[0,0,0];AX=[[1,0,0],[0,1,0],[0,0,1]];}
  const cen=[0,1,2].map(i=>V.reduce((s,p)=>s+p[i],0)/V.length),sh=p=>p.map((x,i)=>x-cen[i]),mR=Math.max(...V.map(p=>Math.hypot(...sh(p))));
+ 
  const m=Math.min(w,h)*.3,x0=w-m-6,y0=h-m-6,cx=x0+m/2,cy=y0+m/2+8,sc=m*.36/mR;
  const tr=p=>{const a=d3?mv(Rv,mv(R,sh(p))):mv(R,sh(p));return d3?[cx+sc*a[0],cy-sc*a[2],a[1]]:[cx+sc*a[0],cy-sc*a[1],0];};
  ctx.globalAlpha=.93;ctx.fillStyle=col('--card');ctx.fillRect(x0,y0,m,m);ctx.globalAlpha=1;ctx.strokeStyle=col('--bd');ctx.lineWidth=1;ctx.strokeRect(x0,y0,m,m);
  ctx.fillStyle=col('--mut');ctx.font='10px system-ui';ctx.fillText('Elementarzelle: '+ST[mode][k].n.split(' (')[0],x0+6,y0+13);
+ 
+ 
  ctx.strokeStyle=col('--mut');ctx.lineWidth=1.2;ctx.globalAlpha=.8;
  for(const [i,j] of E){const a=tr(V[i]),b=tr(V[j]);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}
  ctx.globalAlpha=1;const po=tr(O);
  AX.forEach((t,i)=>{const b=tr(t);arrow(po,b,ac[i],2.4);ctx.fillStyle=ac[i];ctx.font='bold 12px system-ui';ctx.fillText('abc'[i],b[0]+4,b[1]-4);});
  const at=V.map(p=>({q:tr(p),c:col('--pt')})).concat(X.map(p=>({q:tr(p),c:col('--sph')}))).sort((a,b)=>b.q[2]-a.q[2]);
- for(const o of at){ctx.fillStyle=o.c;ctx.strokeStyle=col('--bg');ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(o.q[0],o.q[1],4.5,0,7);ctx.fill();ctx.stroke();}
+ for(const o of at){ctx.fillStyle=o.c;ctx.strokeStyle=col('--bg');ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(o.q[0],o.q[1],6,0,7);ctx.fill();ctx.stroke();}
 }
 function size(){dpr=window.devicePixelRatio||1;cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;dirty=1;}
 new ResizeObserver(size).observe(cv);
@@ -155,7 +165,7 @@ cv.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,
 function reset(){Rc=I();Rb=I();phi=20;$('phi').value=20;yaw=.6;pitch=.45;dirty=1;}
 document.querySelectorAll('input[name=md]').forEach(r=>r.onchange=()=>{mode=r.value;fillSel();fillTg();reset();build();});
 $('st').onchange=build;$('lam').oninput=build;$('rst').onclick=reset;
-['tol','lim','idx','axs','cel'].forEach(i=>$(i).oninput=()=>dirty=1);
+['tol','lim','idx','axs','cel','rcl'].forEach(i=>$(i).oninput=()=>dirty=1);
 $('phi').oninput=()=>{phi=+$('phi').value;dirty=1;};
 fillSel();fillTg();build();
 (function frame(){if($('auto').checked){phi=(phi+.4)%360;$('phi').value=phi;dirty=1;}if(dirty){dirty=0;draw();}requestAnimationFrame(frame);})();
