@@ -48,8 +48,8 @@ button{padding:5px 10px;border:1px solid var(--bd);background:var(--bg);color:va
    </div>
    <label>Applied field h &nbsp;<small>(servo — steered by the sweep)</small>: <b id="hcv">2.00</b></label>
    <input id="hc" type="range" min="-2" max="2" step="0.01" value="2" disabled>
-   <label>Sweep speed = <b id="spv">3.0</b></label>
-   <input id="sp" type="range" min="1" max="8" step="0.1" value="3">
+   <label>Sweep speed = <b id="spv">5.0</b></label>
+   <input id="sp" type="range" min="1" max="8" step="0.1" value="5">
   </div>
   <div class="card">
    <div class="row">
@@ -118,6 +118,12 @@ function stateAt(h){
   var best=0,bd=1e18;for(var i=0;i<s.length;i++){var d=Math.abs(s[i].h-h);if(d<bd){bd=d;best=i;}}
   cur.idx=best;return s[best];
 }
+/* non-mutating lookup for display (does not touch the animator's cur.idx) */
+function sampleAt(h){
+  var s=cur.samples;if(!s.length)return null;
+  var best=0,bd=1e18;for(var i=0;i<s.length;i++){var d=Math.abs(s[i].h-h);if(d<bd){bd=d;best=i;}}
+  return s[best];
+}
 function swUnit(mu){var c=Math.cos(mu),s=Math.sin(mu);var a=Math.pow(Math.abs(c),2/3)+Math.pow(Math.abs(s),2/3);return 1/Math.pow(a,1.5);}
 
 /* ================= drawing helpers ================= */
@@ -149,7 +155,7 @@ function draw(){
     for(var i=0;i<=440;i++){var t=i/440*TAU,e=E(t,H0),xx=x(t),yy=y(e);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);}ctx.stroke();
     ctx.strokeStyle=col('--mut');ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px0,py0+ph);ctx.lineTo(px0+pw,py0+ph);ctx.stroke();
     text('0',px0-2,py0+ph+14,col('--mut'));text('π',px0+pw/2-3,py0+ph+14,col('--mut'));text('2π',px0+pw-12,py0+ph+14,col('--mut'));
-    var st=stateAt(H0);if(st){ctx.fillStyle=col('--kp');ctx.strokeStyle=col('--bg');ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(x(st.th),y(E(st.th,H0)),5,0,TAU);ctx.fill();ctx.stroke();}
+    var st=sampleAt(H0);if(st){ctx.fillStyle=col('--kp');ctx.strokeStyle=col('--bg');ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(x(st.th),y(E(st.th,H0)),5,0,TAU);ctx.fill();ctx.stroke();}
   });
 
   /* ---- TR vector (live H length & direction + uniform fixed-size box) ---- */
@@ -177,7 +183,7 @@ function draw(){
         text('H',hp[0]+(Math.cos(hAng)<-0.2?-20:7),hp[1]+(Math.sin(hAng)<-0.2?8:-7),col('--sph'),11);
       }
     }
-    var st=stateAt(H0);if(st){
+    var st=sampleAt(H0);if(st){
       var mp=arr(st.th,rad*0.9,col('--kp'),3.4);
       ctx.fillStyle=col('--kp');ctx.beginPath();ctx.arc(mp[0],mp[1],4.2,0,TAU);ctx.fill();
       text('M',mp[0]+7,mp[1]-6,col('--kp'),11);
@@ -195,7 +201,7 @@ function draw(){
     for(var i=0;i<s.length;i++){var xx=X(s[i].h),yy=Y(s[i].m);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);}ctx.stroke();ctx.globalAlpha=1;
     ctx.strokeStyle=col('--sph');ctx.globalAlpha=.9;ctx.lineWidth=2;ctx.beginPath();
     for(var i=0;i<=cur.idx&&i<s.length;i++){var xx=X(s[i].h),yy=Y(s[i].m);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);}ctx.stroke();ctx.globalAlpha=1;
-    var st=stateAt(H0);if(st){ctx.fillStyle=col('--kp');ctx.strokeStyle=col('--bg');ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(X(H0),Y(st.m),5.5,0,TAU);ctx.fill();ctx.stroke();}
+    var st=sampleAt(H0);if(st){ctx.fillStyle=col('--kp');ctx.strokeStyle=col('--bg');ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(X(H0),Y(st.m),5.5,0,TAU);ctx.fill();ctx.stroke();}
     if(cur.hc!=null){ctx.strokeStyle=col('--k0');ctx.setLineDash([3,3]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(X(-Math.abs(cur.hc)),py0);ctx.lineTo(X(-Math.abs(cur.hc)),py0+ph);ctx.stroke();ctx.setLineDash([]);
       text('h_c',X(-Math.abs(cur.hc))+3,py0+10,col('--k0'),9);}
     text('-h'+fmt(hmax,1),px0-30,py0+ph/2+13,col('--mut'));
@@ -213,20 +219,23 @@ function draw(){
     /* astroid |ux|^2/3 + |uy|^2/3 = 1   <=>  param (cos^3 t, sin^3 t) */
     ctx.strokeStyle=col('--gv');ctx.lineWidth=2;ctx.beginPath();
     for(var i=0;i<=360;i++){var t=i/360*TAU;var xx=PX(Math.pow(Math.cos(t),3)),yy=PY(Math.pow(Math.sin(t),3));i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);}ctx.stroke();
-    /* ray along θH up to the switching distance f(θH) */
+    /* ray along θH up to the switching distance f(θH) — static (depends on θH only) */
     var f=swUnit(thH),bx=Math.cos(thH)*f,by=Math.sin(thH)*f;
     ctx.strokeStyle=col('--mut');ctx.globalAlpha=.55;ctx.setLineDash([3,3]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx,cy0);ctx.lineTo(PX(bx),PY(by));ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
-    ctx.fillStyle=col('--mut');ctx.beginPath();ctx.arc(PX(bx),PY(by),3,0,TAU);ctx.fill();
-    /* current config: ux=h cosθH/K, uy=h sinθH/K */
+    /* switching-field marker on the boundary (hollow cross; static) */
+    ctx.strokeStyle=col('--fg');ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(PX(bx),PY(by),4,0,TAU);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(PX(bx)-5,PY(by));ctx.lineTo(PX(bx)+5,PY(by));ctx.moveTo(PX(bx),PY(by)-5);ctx.lineTo(PX(bx),PY(by)+5);ctx.stroke();
+    text('switching h_s',PX(bx)+7,PY(by)-6,col('--mut'),9);
+    /* current config point (field tip) — moves with h */
     var ux=H0*Math.cos(thH)/cur.K, uy=H0*Math.sin(thH)/cur.K;
     var inside=Math.pow(Math.abs(ux),2/3)+Math.pow(Math.abs(uy),2/3)<1;
     var pc=inside?col('--kp'):col('--k0');
-    ctx.fillStyle=pc;ctx.strokeStyle=col('--bg');ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(PX(ux),PY(uy),6,0,TAU);ctx.fill();ctx.stroke();
-    text('Config ('+(inside?'metastable':'saturated')+')',PX(ux)+8,PY(uy)-8,col('--mut'),9);
+    ctx.fillStyle=pc;ctx.strokeStyle=col('--bg');ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(PX(ux),PY(uy),6,0,TAU);ctx.fill();ctx.stroke();
+    text('config (h)',PX(ux)+8,PY(uy)-8,col('--mut'),9);
   });
 
   /* ---- readouts ---- */
-  var st=stateAt(H0);
+  var st=sampleAt(H0);
   $('rth').textContent=fmt(st.th*180/TAU,0)+'°';
   $('rm').textContent=fmt(st.m,3);
   $('rhc').textContent=cur.hc!=null?fmt(Math.abs(cur.hc),3):'—';
@@ -249,7 +258,7 @@ function setParams(){
   draw();
 }
 function reset(){
-  $('th').value=45;$('ke').value=1;$('ha').value=2;$('sp').value=3;
+  $('th').value=45;$('ke').value=1;$('ha').value=2;$('sp').value=5;
   setParams();
   cur.h=cur.hmax;cur.idx=0;cur.dir=1;cur.playing=false;$('play').textContent='▶ Play sweep';
   stateAt(cur.h);
@@ -261,24 +270,29 @@ $('sp').oninput=function(){$('spv').textContent=fmt(+$('sp').value,1);};
 $('play').onclick=function(){cur.playing=!cur.playing;$('play').textContent=cur.playing?'⏸ Pause':'▶ Play sweep';cur.last=performance.now();};
 $('rst').onclick=reset;
 ['en','vc','hy','as','ex'].forEach(function(i){$(i).onchange=function(){draw();};});
-/* infinite back-and-forth (ping-pong) across both hysteresis branches */
+/* infinite back-and-forth (ping-pong) across both hysteresis branches.
+   The next frame is scheduled FIRST so the loop survives any draw error. */
 function advance(t){
-  if(cur.playing){
-    var sps=8*(+$('sp').value);
-    cur.acc+=Math.min(t-cur.last,120)*sps/1000;cur.last=t;
-    var step=Math.floor(cur.acc);
-    if(step>0){
-      cur.acc-=step;
-      var N=cur.samples.length;
-      while(step-- > 0 && N>1){
-        cur.idx+=cur.dir;
-        if(cur.idx<=0){cur.idx=0;cur.dir=1;}
-        else if(cur.idx>=N-1){cur.idx=N-1;cur.dir=-1;}
+  requestAnimationFrame(advance);
+  try{
+    if(cur.playing){
+      var sps=8*(+$('sp').value);
+      cur.acc+=Math.min(t-cur.last,150)*sps/1000;cur.last=t;
+      var step=Math.floor(cur.acc);
+      if(step>0){
+        cur.acc-=step;
+        var N=cur.samples.length,k=0;
+        while(k++<step&&N>1){
+          cur.idx+=cur.dir;
+          if(cur.idx<=0){cur.idx=0;cur.dir=1;}
+          else if(cur.idx>=N-1){cur.idx=N-1;cur.dir=-1;}
+        }
+        cur.h=cur.samples[cur.idx].h;
+        try{$('hc').value=cur.h.toFixed(2);}catch(_){}
       }
-      cur.h=cur.samples[cur.idx].h;$('hc').value=cur.h.toFixed(2);
-    }
-  }else cur.last=t;
-  draw();requestAnimationFrame(advance);
+    }else cur.last=t;
+    draw();
+  }catch(e){try{draw();}catch(_){}}
 }
 function sizeUp(){dpr=window.devicePixelRatio||1;cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;}
 sizeUp();new ResizeObserver(sizeUp).observe(cv);
