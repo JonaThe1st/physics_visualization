@@ -5,5 +5,12 @@
     "desc": "Rotate a crystal relative to the X-ray beam; a reflection occurs wherever a reciprocal-lattice point touches the Ewald sphere. Explore sc, bcc, fcc and hexagonal lattices in 2D and 3D.",
     "tags": ["crystallography", "reciprocal lattice", "scattering"],
     "on": true
+  },
+  {
+    "slug": "magnetization-reversal",
+    "title": "Magnetization Reversal (Stoner–Wohlfarth)",
+    "desc": "Single-domain particle with uniaxial anisotropy. Sweep the field and watch the magnetization track the energy minimum, flip, and trace the hysteresis loop. Tune the field angle, anisotropy strength and field amplitude; show energy, vector and m(h) panels.",
+    "tags": ["magnetism", "hysteresis", "Stoner-Wohlfarth"],
+    "on": true
   }
 ]
