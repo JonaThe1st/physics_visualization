@@ -11,30 +11,32 @@ body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,-appl
 h1{font-size:18px;margin:0;padding:12px 60px 0}
 .sub{padding:2px 60px 8px;color:var(--mut);font-size:12px}
 .wrap{display:flex;flex-wrap:wrap;gap:12px;padding:0 12px 16px 60px}
-.cvbox{flex:1 1 480px;min-width:300px;max-width:880px}
-canvas{width:100%;aspect-ratio:16/10;display:block;background:var(--card);border:1px solid var(--bd);border-radius:10px;touch-action:none}
-.panel{flex:1 1 260px;max-width:420px;display:flex;flex-direction:column;gap:8px}
+.cvbox{flex:1 1 520px;min-width:320px;max-width:920px}
+canvas{width:100%;aspect-ratio:16/11;display:block;background:var(--card);border:1px solid var(--bd);border-radius:10px;touch-action:none}
+.panel{flex:1 1 250px;max-width:400px;display:flex;flex-direction:column;gap:8px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 12px}
 label{display:block;margin:6px 0 2px;font-size:12px;color:var(--mut)}
 label b{color:var(--fg);font-weight:600}
 input[type=range]{width:100%}
+input[type=range]:disabled{accent-color:var(--mut);opacity:.45}
 .row{display:flex;flex-wrap:wrap;gap:4px 12px}
 .row label{display:inline-flex;align-items:center;gap:4px;margin:3px 0;color:var(--fg);font-size:13px}
 button{padding:5px 10px;border:1px solid var(--bd);background:var(--bg);color:var(--fg);border-radius:6px;cursor:pointer}
+.hread{font:12px ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:7px 9px;margin-top:6px;color:var(--fg);letter-spacing:.02em}
 .grid{display:flex;flex-wrap:wrap;gap:8px}
-.grid .cell{flex:1 1 118px;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:6px 8px}
+.grid .cell{flex:1 1 112px;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:6px 8px}
 .grid .cell .k{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.03em}
-.grid .cell .v{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.grid .cell .v{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
 </style></head><body>
 <h1>Magnetization Reversal (Stoner–Wohlfarth)</h1>
-<div class="sub">Single-domain particle, uniaxial anisotropy, easy axis as reference. Energy ε(θ) = K·sin²θ − 2h·cos(θ−θ<sub>H</sub>) with reduced field h = H/H<sub>K</sub>. The magnetization tracks the local energy minimum and jumps when its well disappears. Stronger K ⇒ larger switching field ⇒ open hysteresis; field much weaker/h<sub>max</sub> below h<sub>c</sub> ⇒ reversible rotation.</div>
+<div class="sub">Single-domain particle, uniaxial anisotropy, easy axis as reference. Energy ε(θ) = K·sin²θ − 2h·cos(θ−θ<sub>H</sub>), reduced field h = H/H<sub>K</sub>. The magnetization tracks the local energy minimum and jumps when its well disappears. Stronger K ⇒ larger switching field ⇒ open hysteresis; field below h<sub>c</sub> ⇒ reversible rotation. The astroid plots the switching-field envelope in the H<sub>∥</sub>–H<sub>⊥</sub> plane.</div>
 <div class="wrap">
  <div class="cvbox"><canvas id="cv"></canvas></div>
  <div class="panel">
   <div class="card">
    <label>Field angle θ<sub>H</sub> (field vs easy axis) = <b id="thv">45°</b></label>
    <input id="th" type="range" min="0" max="180" step="0.5" value="45">
-   <label>Anisotropy strength K = <b id="kv">1.00</b> &nbsp;(switching field h<sub>c</sub> ∝ K)</label>
+   <label>Anisotropy strength K = <b id="kv">1.00</b></label>
    <input id="ke" type="range" min="0.3" max="3.0" step="0.05" value="1.0">
    <label>Max applied field h<sub>max</sub> = <b id="hv">2.0</b></label>
    <input id="ha" type="range" min="0.3" max="3.0" step="0.05" value="2.0">
@@ -44,16 +46,17 @@ button{padding:5px 10px;border:1px solid var(--bd);background:var(--bg);color:va
     <button id="play">▶ Play sweep</button>
     <button id="rst">Reset</button>
    </div>
-   <label>Applied field h (drag, or from sweep) = <b id="hcv">2.00</b></label>
-   <input id="hc" type="range" min="-2" max="2" step="0.005" value="2">
-   <label>Sweep speed = <b id="spv">1.0</b></label>
-   <input id="sp" type="range" min="0.2" max="4" step="0.05" value="1">
+   <label>Applied field h &nbsp;<small>(servo — steered by the sweep)</small>: <b id="hcv">2.00</b></label>
+   <input id="hc" type="range" min="-2" max="2" step="0.01" value="2" disabled>
+   <label>Sweep speed = <b id="spv">3.0</b></label>
+   <input id="sp" type="range" min="1" max="8" step="0.1" value="3">
   </div>
   <div class="card">
    <div class="row">
-    <label><input type="checkbox" id="en" checked> Energy landscape</label>
-    <label><input type="checkbox" id="vc" checked> Vector diagram</label>
+    <label><input type="checkbox" id="en" checked> Energy</label>
+    <label><input type="checkbox" id="vc" checked> Vector</label>
     <label><input type="checkbox" id="hy" checked> Hysteresis</label>
+    <label><input type="checkbox" id="as" checked> Astroid</label>
    </div>
    <div class="row">
     <label><input type="checkbox" id="ex" checked> Easy axis / H arrow</label>
@@ -66,7 +69,8 @@ button{padding:5px 10px;border:1px solid var(--bd);background:var(--bg);color:va
     <div class="cell"><div class="k">Coercivity h<sub>c</sub></div><div class="v" id="rhc">—</div></div>
     <div class="cell"><div class="k">Remanence</div><div class="v" id="rr">1.00</div></div>
    </div>
-   <div class="sub" style="padding:6px 0 0">h<sub>c</sub> = field where M·Ĥ crosses zero. θ<sub>H</sub>=0°: rectangular loop, h<sub>c</sub>=K (abrupt flip). Tilted 0°–~45°: h<sub>c</sub>=K(cos⅔θ+sin⅔θ)<sup>−3/2</sup> (SW switching field). Steeper θ: M rotates before flipping, h<sub>c</sub> drops toward 0. θ<sub>H</sub>=90°: fully reversible rotation, no loop, h<sub>c</sub>→0.</div>
+   <div class="hread" id="fold">&nbsp;</div>
+   <div class="sub" style="padding:6px 0 0">h<sub>c</sub> = field where M·Ĥ crosses zero. θ<sub>H</sub>=0°: rectangular loop, h<sub>c</sub>=K. Tilted (≤~45°): h<sub>c</sub>=K(cos⅔θ+sin⅔θ)<sup>−3/2</sup>. Steeper θ: M rotates before flipping, h<sub>c</sub>→0. θ<sub>H</sub>=90°: reversible, no loop. Astroid point: green = saturated (unique minimum), red = inside, metastable (hysteresis).</div>
   </div>
  </div>
 </div>
@@ -77,25 +81,18 @@ var TAU=2*Math.PI;
 var dpr=1;
 function col(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
 
-/* ================= physics (Stoner-Wohlfarth relaxation) ================= */
+/* ================= physics (Stoner-Wohlfarth relaxation; verified) ========= */
 var S=175, NGO=1440, GG=TAU/NGO;
-var cur={thH:Math.PI/4,K:1,hmax:2,h:2,samples:[],idx:0,playing:false,last:0,acc:0,hc:null,rem:1};
-
+var cur={thH:Math.PI/4,K:1,hmax:2,h:2,samples:[],idx:0,dir:1,playing:false,last:0,acc:0,hc:null,rem:1};
 function E(th,h){return cur.K*Math.pow(Math.sin(th),2)-2*h*Math.cos(th-cur.thH);}
 function minimaOf(h){
   var arr=new Float64Array(NGO),out=[];
   for(var i=0;i<NGO;i++){var t=i*GG;arr[i]=cur.K*Math.pow(Math.sin(t),2)-2*h*Math.cos(t-cur.thH);}
-  for(var i=0;i<NGO;i++){
-    var p=arr[(i-1+NGO)%NGO],c=arr[i],n=arr[(i+1)%NGO];
-    if(c<=p&&c<=n)out.push(i*GG);   // plain grid-local minimum (keep angles raw)
-  }
+  for(var i=0;i<NGO;i++){var p=arr[(i-1+NGO)%NGO],c=arr[i],n=arr[(i+1)%NGO];if(c<=p&&c<=n)out.push(i*GG);}
   return out;
 }
 function relDist(a,b){var d=Math.abs(a-b);return Math.min(d,TAU-d);}
-/* Follow the local energy minimum (Stoner-Wohlfarth branch). Primary: smallest
-   angular distance from the current angle; tie (e.g. symmetric wells at steep
-   tilt): closest in m = M·H. The magnetization stays in its basin and only
-   jumps when that basin disappears — which is exactly the SW instability. */
+/* branch-following: nearest local min, ties broken by m=cos(theta-thetaH) */
 function relax(h,th0,m0){
   var ms=minimaOf(h),best=null,bd=1e18,bdm=1e18;
   for(var k=0;k<ms.length;k++){var t=ms[k],d=relDist(t,th0),m=Math.cos(t-cur.thH),dm=Math.abs(m-m0);
@@ -110,11 +107,9 @@ function rebuild(){
   for(var i=0;i<S;i++){var rr=relax(down[i],th,m);th=rr[0];m=rr[1];sm.push({h:down[i],th:th,m:m});}
   for(var i=0;i<S;i++){var rr2=relax(up[i],th,m);th=rr2[0];m=rr2[1];sm.push({h:up[i],th:th,m:m});}
   cur.samples=sm;
-  // coercivity (down pass): first m<0 crossing
   var hc=null;for(var i=1;i<S;i++){if(sm[i].m<=0&&sm[i-1].m>0){hc=sm[i].h;break;}}
   cur.hc=hc;
-  // remanence: m at h=0 in the down pass
-  var rem=1;var best=1;for(var i=0;i<S;i++){if(Math.abs(sm[i].h)<1e-9){rem=sm[i].m;break;}}
+  var rem=1;for(var i=0;i<S;i++){if(Math.abs(sm[i].h)<1e-9){rem=sm[i].m;break;}}
   cur.rem=rem;
   cur.idx=clamp(cur.idx,0,sm.length-1);
 }
@@ -123,100 +118,122 @@ function stateAt(h){
   var best=0,bd=1e18;for(var i=0;i<s.length;i++){var d=Math.abs(s[i].h-h);if(d<bd){bd=d;best=i;}}
   cur.idx=best;return s[best];
 }
+function swUnit(mu){var c=Math.cos(mu),s=Math.sin(mu);var a=Math.pow(Math.abs(c),2/3)+Math.pow(Math.abs(s),2/3);return 1/Math.pow(a,1.5);}
 
-/* ================= drawing ================= */
+/* ================= drawing helpers ================= */
 function fmt(v,d){return v.toFixed(d);}
 function text(s,x,y,c,fs){ctx.fillStyle=c||col('--fg');ctx.font=(fs||11)+'px system-ui';ctx.fillText(s,x,y);}
-function rect(x,y,w,h){ctx.fillStyle=col('--card');ctx.strokeStyle=col('--bd');ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(x,y,w,h,8);ctx.fill();ctx.stroke();}
-function vtag(x,y,w,h,title){rect(x,y,w,h);ctx.fillStyle=col('--mut');ctx.font='11px system-ui';ctx.fillText(title,x+9,y+16);}
-
-function drawPanel(show,fn){if(show)fn();}
+function panel(x,y,w,h,title){
+  ctx.fillStyle=col('--card');ctx.strokeStyle=col('--bd');ctx.lineWidth=1;
+  ctx.beginPath();ctx.roundRect(x,y,w,h,8);ctx.fill();ctx.stroke();
+  ctx.fillStyle=col('--mut');ctx.font='11px system-ui';ctx.fillText(title,x+9,y+16);
+}
 
 function draw(){
-  var host=cv;var w=host.clientWidth,h=host.clientHeight;
+  var w=cv.clientWidth,h=cv.clientHeight,H0=cur.h,thH=cur.thH;
   ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
-  var H0=cur.h, thH=cur.thH;
-  var pad=12,gap=10,titleH=26;
-  var availH=h-pad-titleH;
-  var midSide=Math.min(availH*0.80,w*0.27,gap*0+260);
-  var leftW=Math.max(140,w*0.30);
-  var ex0=pad, ey0=titleH+4, eh=availH-8;
-  var mx=ex0+leftW+gap, my=ey0+(eh-midSide)/2;
-  var hx=mx+midSide+gap, hw=w-pad-hx;
-  /* ---- energy panel ---- */
-  drawPanel($('en').checked,function(){
-    vtag(ex0,ey0,leftW,eh,'Energy  ε(θ)   h='+H0.toFixed(2));
-    var px0=ex0+36,pw=leftW-46,py0=ey0+40,ph=eh-62;
-    var maxe=cur.K+2*cur.hmax+0.5;
-    var x=t=>px0+t/TAU*pw, y=e=>py0+ph/2-(e/maxe)*(ph/2);
-    /* y=0 dashed */
+  var PAD=12,GAP=10,ROWGAP=8;
+  var colW=(w-2*PAD-GAP)/2, rowH=(h-2*PAD-ROWGAP)/2;
+  var A={x:PAD,y:PAD,w:colW,h:rowH};
+  var B={x:PAD+colW+GAP,y:PAD,w:colW,h:rowH};
+  var C={x:PAD,y:PAD+rowH+ROWGAP,w:colW,h:rowH};
+  var D={x:PAD+colW+GAP,y:PAD+rowH+ROWGAP,w:colW,h:rowH};
+  var drawP=function(p,show,title,fn){if(show){panel(p.x,p.y,p.w,p.h,title);fn(p);}};
+
+  /* ---- TL energy ---- */
+  drawP(A,$('en').checked,'Energy  ε(θ)   h='+H0.toFixed(2),function(p){
+    var px0=p.x+30,pw=p.w-40,py0=p.y+34,ph=p.h-30-18;
+    var maxe=cur.K+2*cur.hmax+0.5,x=t=>px0+t/TAU*pw,y=e=>py0+ph/2-(e/maxe)*(ph/2);
     ctx.strokeStyle=col('--bd');ctx.setLineDash([4,4]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px0,y(0));ctx.lineTo(px0+pw,y(0));ctx.stroke();ctx.setLineDash([]);
-    /* curve */
     ctx.strokeStyle=col('--sph');ctx.lineWidth=1.8;ctx.beginPath();
-    for(var i=0;i<=440;i++){var t=i/440*TAU,e=E(t,H0);var xx=x(t),yy=y(e);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);}ctx.stroke();
-    /* theta axis + labels */
+    for(var i=0;i<=440;i++){var t=i/440*TAU,e=E(t,H0),xx=x(t),yy=y(e);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);}ctx.stroke();
     ctx.strokeStyle=col('--mut');ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px0,py0+ph);ctx.lineTo(px0+pw,py0+ph);ctx.stroke();
-    text('0',px0-2,py0+ph+13,col('--mut'));text('π',px0+pw/2-3,py0+ph+13,col('--mut'));text('2π',px0+pw-11,py0+ph+13,col('--mut'));
-    text('θ',px0+pw+3,py0+ph+13,col('--mut'));
-    /* current min marker */
-    var st=stateAt(H0);if(st){ctx.fillStyle=col('--kp');ctx.beginPath();ctx.arc(x(st.th),y(E(st.th,H0)),5,0,TAU);ctx.fill();}
+    text('0',px0-2,py0+ph+14,col('--mut'));text('π',px0+pw/2-3,py0+ph+14,col('--mut'));text('2π',px0+pw-12,py0+ph+14,col('--mut'));
+    var st=stateAt(H0);if(st){ctx.fillStyle=col('--kp');ctx.strokeStyle=col('--bg');ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(x(st.th),y(E(st.th,H0)),5,0,TAU);ctx.fill();ctx.stroke();}
   });
-  /* ---- vector diagram ---- */
-  drawPanel($('vc').checked,function(){
-    vtag(mx,my,midSide,midSide,'Vector diagram');
-    var cx=mx+midSide/2, baseY=my+midSide-22, rad=Math.min(midSide-46,midSide*0.5);
-    /* unit circle */
+
+  /* ---- TR vector (live H length & direction + uniform fixed-size box) ---- */
+  drawP(B,$('vc').checked,'Vector diagram   h='+H0.toFixed(2),function(p){
+    var cx=p.x+p.w/2, baseY=p.y+p.h*0.56, rad=Math.min(p.w/2-28,baseY-p.y-16);
+    if(rad<16)rad=16;
     ctx.strokeStyle=col('--bd');ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,baseY,rad,0,TAU);ctx.stroke();
     var arr=(ang,uL,c,wd)=>{
       var x=cx+uL*Math.sin(ang),y=baseY-uL*Math.cos(ang);
       ctx.strokeStyle=c;ctx.fillStyle=c;ctx.lineWidth=wd;ctx.lineCap='round';
       ctx.beginPath();ctx.moveTo(cx,baseY);ctx.lineTo(x,y);ctx.stroke();
-      var tf=Math.atan2(y-baseY,x-cx),ah=5.5,s=.5;
+      var tf=Math.atan2(y-baseY,x-cx),ah=5.2,s=.5;
       ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-ah*Math.cos(tf-s),y-ah*Math.sin(tf-s));
       ctx.lineTo(x-ah*Math.cos(tf+s),y-ah*Math.sin(tf+s));ctx.closePath();ctx.fill();
       return[x,y];
     };
     if($('ex').checked){
-      /* easy axis dashed */
-      ctx.strokeStyle=col('--grey');ctx.setLineDash([4,4]);ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(cx,baseY-rad-6);ctx.lineTo(cx,baseY);ctx.stroke();ctx.setLineDash([]);
-      text('easy axis',cx+7,baseY-rad-4,col('--mut'),10);
-      var hp=arr(thH,rad*0.97,col('--sph'),2.6);text('H',hp[0]+(Math.cos(thH)<0?-14:6),hp[1]-6,col('--sph'),12);
+      ctx.strokeStyle=col('--grey');ctx.setLineDash([4,4]);ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(cx,baseY-rad-8);ctx.lineTo(cx,baseY);ctx.stroke();ctx.setLineDash([]);
+      text('easy axis',cx+6,baseY-rad-4,col('--mut'),9);
+      /* live H: length |h|/hmax, direction θH for h>=0 else θH+π */
+      var lenFrac=Math.min(Math.abs(H0)/cur.hmax,1);
+      if(lenFrac>0.03){
+        var hAng=H0>=0?thH:thH+Math.PI;
+        var hp=arr(hAng,rad*(0.14+0.82*lenFrac),col('--sph'),2.6);
+        text('H',hp[0]+(Math.cos(hAng)<-0.2?-20:7),hp[1]+(Math.sin(hAng)<-0.2?8:-7),col('--sph'),11);
+      }
     }
     var st=stateAt(H0);if(st){
       var mp=arr(st.th,rad*0.9,col('--kp'),3.4);
-      ctx.fillStyle=col('--kp');ctx.beginPath();ctx.arc(mp[0],mp[1],4.5,0,TAU);ctx.fill();
-      text('M',mp[0]+7,mp[1]-7,col('--kp'),12);
-      ctx.fillStyle=col('--mut');ctx.font='10px system-ui';
-      ctx.fillText('θ='+fmt(st.th*180/TAU,0)+'°  h='+H0.toFixed(2),cx-34,my+18);
+      ctx.fillStyle=col('--kp');ctx.beginPath();ctx.arc(mp[0],mp[1],4.2,0,TAU);ctx.fill();
+      text('M',mp[0]+7,mp[1]-6,col('--kp'),11);
+      text('θ='+fmt(st.th*180/TAU,0)+'°',cx-24,baseY+rad+17,col('--mut'),10);
     }
   });
-  /* ---- hysteresis ---- */
-  drawPanel($('hy').checked,function(){
-    vtag(hx,ey0,hw,eh,'Hysteresis   m=M·Ĥ  vs  h');
-    var hmax=Math.max(cur.hmax,1.1),px0=hx+42,pw=hw-56,py0=ey0+40,ph=eh-62;
+
+  /* ---- BL hysteresis ---- */
+  drawP(C,$('hy').checked,'Hysteresis   m=M·Ĥ  vs  h',function(p){
+    var hmax=Math.max(cur.hmax,1.1),px0=p.x+36,pw=p.w-46,py0=p.y+34,ph=p.h-30-18;
     var X=v=>px0+(v+hmax)/(2*hmax)*pw, Y=m=>py0+ph/2-(m/1.12)*(ph/2);
-    ctx.strokeStyle=col('--grey');ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(px0,py0+ph/2);ctx.lineTo(px0+pw,py0+ph/2);ctx.stroke();
+    ctx.strokeStyle=col('--grey');ctx.beginPath();ctx.moveTo(px0,py0+ph/2);ctx.lineTo(px0+pw,py0+ph/2);ctx.stroke();
     ctx.beginPath();ctx.moveTo(X(0),py0);ctx.lineTo(X(0),py0+ph);ctx.stroke();
-    /* full loop faint */
-    var s=cur.samples;ctx.strokeStyle=col('--grey');ctx.globalAlpha=.45;ctx.lineWidth=1.4;ctx.beginPath();
-    for(var i=0;i<s.length;i++){var x0=X(s[i].h),yy=Y(s[i].m);i?ctx.lineTo(x0,yy):ctx.moveTo(x0,yy);}ctx.stroke();ctx.globalAlpha=1;
-    /* travelled path */
+    var s=cur.samples;ctx.strokeStyle=col('--grey');ctx.globalAlpha=.5;ctx.lineWidth=1.4;ctx.beginPath();
+    for(var i=0;i<s.length;i++){var xx=X(s[i].h),yy=Y(s[i].m);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);}ctx.stroke();ctx.globalAlpha=1;
     ctx.strokeStyle=col('--sph');ctx.globalAlpha=.9;ctx.lineWidth=2;ctx.beginPath();
-    for(var i=0;i<=cur.idx&&i<s.length;i++){var x0=X(s[i].h),yy=Y(s[i].m);i?ctx.lineTo(x0,yy):ctx.moveTo(x0,yy);}ctx.stroke();ctx.globalAlpha=1;
-    var st=stateAt(H0);
-    if(st){ctx.fillStyle=col('--kp');ctx.strokeStyle=col('--bg');ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(X(H0),Y(st.m),5.5,0,TAU);ctx.fill();ctx.stroke();}
-    text('-h'+fmt(hmax,1),px0-30,py0+ph/2+12,col('--mut'));
-    text('+h',px0+pw-4,py0+ph/2+12,col('--mut'));
-    text('h',px0+pw+4,py0+2,col('--mut'));
+    for(var i=0;i<=cur.idx&&i<s.length;i++){var xx=X(s[i].h),yy=Y(s[i].m);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);}ctx.stroke();ctx.globalAlpha=1;
+    var st=stateAt(H0);if(st){ctx.fillStyle=col('--kp');ctx.strokeStyle=col('--bg');ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(X(H0),Y(st.m),5.5,0,TAU);ctx.fill();ctx.stroke();}
+    if(cur.hc!=null){ctx.strokeStyle=col('--k0');ctx.setLineDash([3,3]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(X(-Math.abs(cur.hc)),py0);ctx.lineTo(X(-Math.abs(cur.hc)),py0+ph);ctx.stroke();ctx.setLineDash([]);
+      text('h_c',X(-Math.abs(cur.hc))+3,py0+10,col('--k0'),9);}
+    text('-h'+fmt(hmax,1),px0-30,py0+ph/2+13,col('--mut'));
+    text('+h',px0+pw-2,py0+ph/2+13,col('--mut'));
   });
+
+  /* ---- BR astroid (switching field + coercivity envelope + config point) ---- */
+  drawP(D,$('as').checked,'Stoner–Wohlfarth astroid  (fields / K)',function(p){
+    var side=Math.min(p.w-28,p.h-70),cx=p.x+p.w/2,cy0=p.y+26+side/2+10,hal=side/2,U=hal/1.6;
+    var PX=t=>cx+t*U, PY=t=>cy0-t*U;
+    /* axes */
+    ctx.strokeStyle=col('--bd');ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(PX(-1.5),cy0);ctx.lineTo(PX(1.5),cy0);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx,PY(-1.5));ctx.lineTo(cx,PY(1.5));ctx.stroke();
+    text('H∥',PX(1.42),cy0+13,col('--mut'));text('H⊥',cx+7,PY(1.42),col('--mut'));
+    /* astroid |ux|^2/3 + |uy|^2/3 = 1   <=>  param (cos^3 t, sin^3 t) */
+    ctx.strokeStyle=col('--gv');ctx.lineWidth=2;ctx.beginPath();
+    for(var i=0;i<=360;i++){var t=i/360*TAU;var xx=PX(Math.pow(Math.cos(t),3)),yy=PY(Math.pow(Math.sin(t),3));i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);}ctx.stroke();
+    /* ray along θH up to the switching distance f(θH) */
+    var f=swUnit(thH),bx=Math.cos(thH)*f,by=Math.sin(thH)*f;
+    ctx.strokeStyle=col('--mut');ctx.globalAlpha=.55;ctx.setLineDash([3,3]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx,cy0);ctx.lineTo(PX(bx),PY(by));ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+    ctx.fillStyle=col('--mut');ctx.beginPath();ctx.arc(PX(bx),PY(by),3,0,TAU);ctx.fill();
+    /* current config: ux=h cosθH/K, uy=h sinθH/K */
+    var ux=H0*Math.cos(thH)/cur.K, uy=H0*Math.sin(thH)/cur.K;
+    var inside=Math.pow(Math.abs(ux),2/3)+Math.pow(Math.abs(uy),2/3)<1;
+    var pc=inside?col('--kp'):col('--k0');
+    ctx.fillStyle=pc;ctx.strokeStyle=col('--bg');ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(PX(ux),PY(uy),6,0,TAU);ctx.fill();ctx.stroke();
+    text('Config ('+(inside?'metastable':'saturated')+')',PX(ux)+8,PY(uy)-8,col('--mut'),9);
+  });
+
   /* ---- readouts ---- */
   var st=stateAt(H0);
   $('rth').textContent=fmt(st.th*180/TAU,0)+'°';
   $('rm').textContent=fmt(st.m,3);
-  $('rhc').textContent=cur.hc!=null?fmt(cur.hc,3):'—';
+  $('rhc').textContent=cur.hc!=null?fmt(Math.abs(cur.hc),3):'—';
   $('rr').textContent=fmt(cur.rem,3);
   $('hcv').textContent=H0.toFixed(2);
+  var ux=H0*Math.cos(thH)/cur.K,uy=H0*Math.sin(thH)/cur.K,inside=Math.pow(Math.abs(ux),2/3)+Math.pow(Math.abs(uy),2/3)<1;
+  $('fold').textContent='switch h_s/K = '+fmt(swUnit(thH),3)+'   |h|/K = '+fmt(Math.abs(H0)/cur.K,3)+'   → '+(inside?'inside astroid, metastable':'past switching, saturated');
 }
 
 /* ================= interaction / animation ================= */
@@ -227,36 +244,45 @@ function setParams(){
   $('kv').textContent=fmt(cur.K,2);
   $('hv').textContent=fmt(cur.hmax,2);
   $('spv').textContent=fmt(+$('sp').value,1);
-  $('hc').min=(-cur.hmax).toFixed(3);$('hc').max=cur.hmax.toFixed(3);$('hc').value=cur.h.toFixed(3);
   rebuild();
+  stateAt(cur.h);
+  draw();
 }
-function syncHC(){cur.playing=false;$('play').textContent='▶ Play sweep';cur.h=+$('hc').value;stateAt(cur.h);}
 function reset(){
-  $('th').value=45;$('ke').value=1;$('ha').value=2;
-  setParams();cur.h=cur.hmax;cur.playing=false;$('play').textContent='▶ Play sweep';
-  $('hc').value=cur.h.toFixed(3);stateAt(cur.h);
+  $('th').value=45;$('ke').value=1;$('ha').value=2;$('sp').value=3;
+  setParams();
+  cur.h=cur.hmax;cur.idx=0;cur.dir=1;cur.playing=false;$('play').textContent='▶ Play sweep';
+  stateAt(cur.h);
 }
-$('th').oninput=function(){setParams();stateAt(cur.h);};
-$('ke').oninput=function(){setParams();stateAt(cur.h);};
-$('ha').oninput=function(){setParams();stateAt(cur.h);};
-$('hc').oninput=syncHC;
+$('th').oninput=function(){setParams();};
+$('ke').oninput=function(){setParams();};
+$('ha').oninput=function(){setParams();};
 $('sp').oninput=function(){$('spv').textContent=fmt(+$('sp').value,1);};
 $('play').onclick=function(){cur.playing=!cur.playing;$('play').textContent=cur.playing?'⏸ Pause':'▶ Play sweep';cur.last=performance.now();};
 $('rst').onclick=reset;
-['en','vc','hy','ex'].forEach(function(i){$(i).onchange=function(){};});
+['en','vc','hy','as','ex'].forEach(function(i){$(i).onchange=function(){draw();};});
+/* infinite back-and-forth (ping-pong) across both hysteresis branches */
 function advance(t){
   if(cur.playing){
     var sps=8*(+$('sp').value);
     cur.acc+=Math.min(t-cur.last,120)*sps/1000;cur.last=t;
     var step=Math.floor(cur.acc);
-    if(step>0){cur.acc-=step;cur.idx=(cur.idx+step)%cur.samples.length;cur.h=cur.samples[cur.idx].h;$('hc').value=cur.h.toFixed(3);}
-  }else{cur.last=t;}
+    if(step>0){
+      cur.acc-=step;
+      var N=cur.samples.length;
+      while(step-- > 0 && N>1){
+        cur.idx+=cur.dir;
+        if(cur.idx<=0){cur.idx=0;cur.dir=1;}
+        else if(cur.idx>=N-1){cur.idx=N-1;cur.dir=-1;}
+      }
+      cur.h=cur.samples[cur.idx].h;$('hc').value=cur.h.toFixed(2);
+    }
+  }else cur.last=t;
   draw();requestAnimationFrame(advance);
 }
 function sizeUp(){dpr=window.devicePixelRatio||1;cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;}
 sizeUp();new ResizeObserver(sizeUp).observe(cv);
-// init
-setParams();cur.h=cur.hmax;$('hc').value=cur.h.toFixed(3);stateAt(cur.h);
+reset();
 requestAnimationFrame(advance);
 </script>
 <script src="../../nav.js"></script>
