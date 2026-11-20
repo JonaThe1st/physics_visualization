@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Physics Visualizations</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#fff;--fg:#1d2330;--mut:#667085;--card:#f3f5f9;--bd:#d9dee8;--pt:#2b2f3a;--sph:#1f6fd1;--k0:#2a9d3f;--kp:#d62828;--gv:#7b2cbf;--link:#1f6fd1}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171d;--fg:#e6e9f0;--mut:#98a1b3;--card:#1e222b;--bd:#323846;--pt:#d5d9e4;--sph:#5a9bff;--k0:#4cc764;--kp:#ff6b6b;--gv:#b98cff;--link:#5a9bff}}
+:root[data-theme="dark"]{--bg:#14171d;--fg:#e6e9f0;--mut:#98a1b3;--card:#1e222b;--bd:#323846;--pt:#d5d9e4;--sph:#5a9bff;--k0:#4cc764;--kp:#ff6b6b;--gv:#b98cff;--link:#5a9bff}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:16px 16px 40px}
+.hdr{max-width:960px;margin:0 auto}
+h1{font-size:26px;margin:0 0 4px}
+.sub{color:var(--mut);font-size:14px;max-width:760px;margin:0 0 6px}
+.wrap{max-width:960px;margin:0 auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:18px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;color:var(--fg);text-decoration:none;transition:transform .12s ease,border-color .12s ease,box-shadow .12s ease}
+.card:hover{transform:translateY(-2px);border-color:var(--sph);box-shadow:0 6px 18px rgba(0,0,0,.10)}
+.card .t{font-size:15px;font-weight:700;color:var(--fg)}
+.card .d{font-size:13px;color:var(--mut);flex:1}
+.card .tg{display:flex;flex-wrap:wrap;gap:4px}
+.card .tag{font-size:11px;color:var(--link);background:var(--bg);border:1px solid var(--bd);border-radius:20px;padding:2px 8px}
+.card.inactive{opacity:.45;pointer-events:none}
+.empty{color:var(--mut);font-size:14px;margin-top:18px}
+.foot{max-width:960px;margin:22px auto 0;color:var(--mut);font-size:12px;border-top:1px solid var(--bd);padding-top:12px}
+a{color:var(--link)}
+</style></head><body>
+<div class="hdr">
+ <h1>Physics Visualizations</h1>
+ <p class="sub">Interactive physics simulations and figures. These are <b>AI-generated</b> visualizations intended for <b>illustration and education</b> — they help build intuition, but should not be treated as rigorously validated reference tools. All simulations run entirely in your browser; no data leaves the page.</p>
+</div>
+<div class="wrap">
+ <div class="grid" id="grid"><div class="empty">Loading simulations…</div></div>
+</div>
+<div class="foot">
+ <p>Each simulation is a single self-contained HTML file under <code>simulations/&lt;slug&gt;/</code>, listed in <code>simulations.json</code>. See the repository README to add your own. &nbsp;·&nbsp; Built with plain HTML/CSS/JS &amp; Canvas &nbsp;·&nbsp; Hosted on GitHub Pages.</p>
+</div>
+<script>
+// Manifest lives in simulations.json. The array below is only a fallback if
+// the manifest cannot be fetched (e.g. opening index.html via file://).
+const FALLBACK=[
+ {slug:'ewald-konstruktion',title:'Ewald Sphere Construction',desc:'Rotate a crystal relative to the X-ray beam; a reflection occurs wherever a reciprocal-lattice point touches the Ewald sphere. Explore sc, bcc, fcc and hexagonal lattices in 2D and 3D.',
+  tags:['crystallography','reciprocal lattice','scattering'],on:true},
+];
+const grid=document.getElementById('grid');
+function render(list){
+ list=(list||[]).filter(s=>s&&s.slug);
+ if(!list.length){grid.innerHTML='<div class="empty">No simulations yet.</div>';return;}
+ grid.innerHTML='';
+ for(const s of list){
+  const a=document.createElement('a');
+  a.className='card'+(s.on===false?' inactive':'');
+  a.href='simulations/'+s.slug+'/';
+  let h='<span class="t"></span><span class="d"></span><span class="tg">';
+  h='<span class="t">'+s.title+'</span><span class="d">'+(s.desc||'')+'</span><span class="tg">';
+  for(const t of (s.tags||[]))h+='<span class="tag">'+t+'</span>';
+  h+='</span>';
+  if(s.on===false)h+='<span class="d">Coming soon</span>';
+  a.innerHTML=h;grid.appendChild(a);
+ }
+}
+fetch('simulations.json').then(r=>{if(!r.ok)throw 0;return r.json();})
+ .then(render).catch(()=>render(FALLBACK));
+</script>
+</body></html>

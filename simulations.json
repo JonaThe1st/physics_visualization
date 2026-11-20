@@ -1,0 +1,9 @@
+[
+  {
+    "slug": "ewald-konstruktion",
+    "title": "Ewald Sphere Construction",
+    "desc": "Rotate a crystal relative to the X-ray beam; a reflection occurs wherever a reciprocal-lattice point touches the Ewald sphere. Explore sc, bcc, fcc and hexagonal lattices in 2D and 3D.",
+    "tags": ["crystallography", "reciprocal lattice", "scattering"],
+    "on": true
+  }
+]
