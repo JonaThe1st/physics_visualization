@@ -46,6 +46,24 @@ There is no required template — any valid HTML works. The only conventions:
 - Optionally support dark mode via the CSS custom properties used across the
   site (`--bg`, `--fg`, `--mut`, `--card`, `--bd`, `--sph`, …).
 
+### Shared nav (hamburger menu)
+
+Each simulation gets a reusable hamburger menu (top-left) that links back to
+the landing page and to every other active simulation. It is **not**
+hard-coded per page — it reads `simulations.json` live, so it stays in sync
+automatically as sims are added. To include it, add one line just before your
+`</body>`:
+
+```html
+<script src="../../nav.js"></script>
+```
+
+The drawer adapts its colors from your page's own CSS variables, so it works
+in both light and dark mode without further setup. If a simulation's header
+title would sit underneath the fixed button, give that header extra left
+padding (the Ewald sim uses `60px`). The landing page includes it the same way
+but via `<script src="nav.js"></script>` (it lives in the repo root).
+
 ### 2. Register it in the manifest
 
 Add a JSON object to the top-level `simulations.json` array:

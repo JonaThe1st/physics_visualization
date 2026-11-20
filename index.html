@@ -61,4 +61,5 @@ function render(list){
 fetch('simulations.json').then(r=>{if(!r.ok)throw 0;return r.json();})
  .then(render).catch(()=>render(FALLBACK));
 </script>
+<script src="nav.js"></script>
 </body></html>

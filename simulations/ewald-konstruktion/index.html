@@ -9,9 +9,9 @@
 :root[data-theme="dark"]{--bg:#14171d;--fg:#e6e9f0;--mut:#98a1b3;--card:#1e222b;--bd:#323846;--pt:#d5d9e4;--grey:#4a5163;--sph:#5a9bff;--k0:#4cc764;--kp:#ff6b6b;--gv:#b98cff}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
-h1{font-size:18px;margin:0;padding:12px 16px 0}
-.sub{padding:2px 16px 8px;color:var(--mut);font-size:12px}
-.wrap{display:flex;flex-wrap:wrap;gap:12px;padding:0 12px 16px}
+h1{font-size:18px;margin:0;padding:12px 60px 0}
+.sub{padding:2px 60px 8px;color:var(--mut);font-size:12px}
+.wrap{display:flex;flex-wrap:wrap;gap:12px;padding:0 12px 16px 60px}
 .cvbox{flex:1 1 420px;min-width:280px;max-width:820px}
 canvas{width:100%;aspect-ratio:1/1;display:block;background:var(--card);border:1px solid var(--bd);border-radius:10px;touch-action:none;cursor:grab}
 .panel{flex:1 1 280px;max-width:420px;display:flex;flex-direction:column;gap:8px}
@@ -169,4 +169,6 @@ $('st').onchange=build;$('lam').oninput=build;$('rst').onclick=reset;
 $('phi').oninput=()=>{phi=+$('phi').value;dirty=1;};
 fillSel();fillTg();build();
 (function frame(){if($('auto').checked){phi=(phi+.4)%360;$('phi').value=phi;dirty=1;}if(dirty){dirty=0;draw();}requestAnimationFrame(frame);})();
-</script></body></html>
+</script>
+<script src="../../nav.js"></script>
+</body></html>
