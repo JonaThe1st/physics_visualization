@@ -83,7 +83,7 @@ function col(n){return getComputedStyle(document.documentElement).getPropertyVal
 
 /* ================= physics (Stoner-Wohlfarth relaxation; verified) ========= */
 var S=175, NGO=1440, GG=TAU/NGO;
-var cur={thH:Math.PI/4,K:1,hmax:2,h:2,samples:[],idx:0,dir:1,playing:false,last:0,acc:0,hc:null,rem:1};
+var cur={thH:Math.PI/4,K:1,hmax:2,h:2,th:Math.PI/4,m:1,samples:[],idx:0,dir:1,playing:false,last:0,acc:0,hc:null,rem:1};
 function E(th,h){return cur.K*Math.pow(Math.sin(th),2)-2*h*Math.cos(th-cur.thH);}
 function minimaOf(h){
   var arr=new Float64Array(NGO),out=[];
@@ -111,19 +111,15 @@ function rebuild(){
   cur.hc=hc;
   var rem=1;for(var i=0;i<S;i++){if(Math.abs(sm[i].h)<1e-9){rem=sm[i].m;break;}}
   cur.rem=rem;
-  cur.idx=clamp(cur.idx,0,sm.length-1);
+  /* keep the current branch: nearest sample in h, tie-broken by m (magnetization
+     selects the upper/lower branch so a param change doesn't flip branches) */
+  var best=0,bd=1e18,bdm=1e18;
+  for(var i=0;i<sm.length;i++){var d=Math.abs(sm[i].h-cur.h),dm2=Math.abs(sm[i].m-cur.m);
+    if(d<bd||(Math.abs(d-bd)<1e-12&&dm2<bdm)){best=i;bd=d;bdm=dm2;}}
+  cur.idx=best;cur.th=sm[best].th;cur.m=sm[best].m;
 }
-function stateAt(h){
-  var s=cur.samples;if(!s.length)return null;
-  var best=0,bd=1e18;for(var i=0;i<s.length;i++){var d=Math.abs(s[i].h-h);if(d<bd){bd=d;best=i;}}
-  cur.idx=best;return s[best];
-}
-/* non-mutating lookup for display (does not touch the animator's cur.idx) */
-function sampleAt(h){
-  var s=cur.samples;if(!s.length)return null;
-  var best=0,bd=1e18;for(var i=0;i<s.length;i++){var d=Math.abs(s[i].h-h);if(d<bd){bd=d;best=i;}}
-  return s[best];
-}
+/* exact animator position (always on the correct branch, never a h-nearest lookup) */
+function nowState(){return cur.samples.length?cur.samples[cur.idx]:null;}
 function swUnit(mu){var c=Math.cos(mu),s=Math.sin(mu);var a=Math.pow(Math.abs(c),2/3)+Math.pow(Math.abs(s),2/3);return 1/Math.pow(a,1.5);}
 
 /* ================= drawing helpers ================= */
@@ -155,7 +151,7 @@ function draw(){
     for(var i=0;i<=440;i++){var t=i/440*TAU,e=E(t,H0),xx=x(t),yy=y(e);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);}ctx.stroke();
     ctx.strokeStyle=col('--mut');ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px0,py0+ph);ctx.lineTo(px0+pw,py0+ph);ctx.stroke();
     text('0',px0-2,py0+ph+14,col('--mut'));text('π',px0+pw/2-3,py0+ph+14,col('--mut'));text('2π',px0+pw-12,py0+ph+14,col('--mut'));
-    var st=sampleAt(H0);if(st){ctx.fillStyle=col('--kp');ctx.strokeStyle=col('--bg');ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(x(st.th),y(E(st.th,H0)),5,0,TAU);ctx.fill();ctx.stroke();}
+    var st=nowState();if(st){ctx.fillStyle=col('--kp');ctx.strokeStyle=col('--bg');ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(x(st.th),y(E(st.th,H0)),5,0,TAU);ctx.fill();ctx.stroke();}
   });
 
   /* ---- TR vector (live H length & direction + uniform fixed-size box) ---- */
@@ -183,7 +179,7 @@ function draw(){
         text('H',hp[0]+(Math.cos(hAng)<-0.2?-20:7),hp[1]+(Math.sin(hAng)<-0.2?8:-7),col('--sph'),11);
       }
     }
-    var st=sampleAt(H0);if(st){
+    var st=nowState();if(st){
       var mp=arr(st.th,rad*0.9,col('--kp'),3.4);
       ctx.fillStyle=col('--kp');ctx.beginPath();ctx.arc(mp[0],mp[1],4.2,0,TAU);ctx.fill();
       text('M',mp[0]+7,mp[1]-6,col('--kp'),11);
@@ -201,7 +197,7 @@ function draw(){
     for(var i=0;i<s.length;i++){var xx=X(s[i].h),yy=Y(s[i].m);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);}ctx.stroke();ctx.globalAlpha=1;
     ctx.strokeStyle=col('--sph');ctx.globalAlpha=.9;ctx.lineWidth=2;ctx.beginPath();
     for(var i=0;i<=cur.idx&&i<s.length;i++){var xx=X(s[i].h),yy=Y(s[i].m);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);}ctx.stroke();ctx.globalAlpha=1;
-    var st=sampleAt(H0);if(st){ctx.fillStyle=col('--kp');ctx.strokeStyle=col('--bg');ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(X(H0),Y(st.m),5.5,0,TAU);ctx.fill();ctx.stroke();}
+    var st=nowState();if(st){ctx.fillStyle=col('--kp');ctx.strokeStyle=col('--bg');ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(X(H0),Y(st.m),5.5,0,TAU);ctx.fill();ctx.stroke();}
     if(cur.hc!=null){ctx.strokeStyle=col('--k0');ctx.setLineDash([3,3]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(X(-Math.abs(cur.hc)),py0);ctx.lineTo(X(-Math.abs(cur.hc)),py0+ph);ctx.stroke();ctx.setLineDash([]);
       text('h_c',X(-Math.abs(cur.hc))+3,py0+10,col('--k0'),9);}
     text('-h'+fmt(hmax,1),px0-30,py0+ph/2+13,col('--mut'));
@@ -235,7 +231,7 @@ function draw(){
   });
 
   /* ---- readouts ---- */
-  var st=sampleAt(H0);
+  var st=nowState();
   $('rth').textContent=fmt(st.th*180/TAU,0)+'°';
   $('rm').textContent=fmt(st.m,3);
   $('rhc').textContent=cur.hc!=null?fmt(Math.abs(cur.hc),3):'—';
@@ -254,14 +250,13 @@ function setParams(){
   $('hv').textContent=fmt(cur.hmax,2);
   $('spv').textContent=fmt(+$('sp').value,1);
   rebuild();
-  stateAt(cur.h);
   draw();
 }
 function reset(){
   $('th').value=45;$('ke').value=1;$('ha').value=2;$('sp').value=5;
+  cur.h=cur.hmax;cur.m=1;
   setParams();
-  cur.h=cur.hmax;cur.idx=0;cur.dir=1;cur.playing=false;$('play').textContent='▶ Play sweep';
-  stateAt(cur.h);
+  cur.dir=1;cur.playing=false;$('play').textContent='▶ Play sweep';
 }
 $('th').oninput=function(){setParams();};
 $('ke').oninput=function(){setParams();};
@@ -287,7 +282,7 @@ function advance(t){
           if(cur.idx<=0){cur.idx=0;cur.dir=1;}
           else if(cur.idx>=N-1){cur.idx=N-1;cur.dir=-1;}
         }
-        cur.h=cur.samples[cur.idx].h;
+        cur.h=cur.samples[cur.idx].h;cur.th=cur.samples[cur.idx].th;cur.m=cur.samples[cur.idx].m;
         try{$('hc').value=cur.h.toFixed(2);}catch(_){}
       }
     }else cur.last=t;
