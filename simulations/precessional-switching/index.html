@@ -177,8 +177,11 @@ cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY};cv.setPoint
 cv.addEventListener('pointerup',()=>{drag=null;cv.style.cursor='grab';});
 cv.addEventListener('pointermove',e=>{if(!drag)return;yaw+=(e.clientX-drag.x)*.01;pitch=Math.max(-1.5,Math.min(1.5,pitch+(e.clientY-drag.y)*.01));drag={x:e.clientX,y:e.clientY};dirty=1;});
 document.querySelectorAll('input[name=fld]').forEach(r=>r.onchange=()=>{mode=r.value;reset();});
-function rebuild(){orbit=orbitLen();trail=[];dirty=1;}
-['h','th','hk','al','pu'].forEach(i=>$(i).oninput=()=>{dirty=1;if(i!=='al'&&i!=='pu'){orbit=orbitLen();halfT=flipTime(+$('h').value,+$('hk').value,+$('th').value*Math.PI/180);}if(i==='al'&&+$('al').value==0){trail=[];$('trl').checked=true;}});
+function paramDot(){
+  orbit=orbitLen();halfT=flipTime(+$('h').value,+$('hk').value,+$('th').value*Math.PI/180);
+  m=[1,0,0];t=0;trail=[];dirty=1;}
+['h','th','hk'].forEach(i=>$(i).oninput=()=>{dirty=1;paramDot();});
+['al','pu'].forEach(i=>$(i).oninput=()=>{dirty=1;if(i==='al'&&+$('al').value==0){trail=[];$('trl').checked=true;}});
 $('orb').onchange=()=>dirty=1;$('trl').onchange=()=>dirty=1;
 $('rst').onclick=reset;
 $('pbtn').onclick=()=>{playing=!playing;$('pbtn').textContent=playing?'Pause':'Play';};
