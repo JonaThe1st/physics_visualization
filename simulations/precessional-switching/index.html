@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="de"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Precessional Switching – interaktiv</title>
+<title>Präzessionales Schalten (LLG) – interaktiv</title>
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 --bg:#fff;--fg:#1d2330;--mut:#667085;--card:#f3f5f9;--bd:#d9dee8;--pt:#2b2f3a;--grey:#b3bac8;--sph:#1f6fd1;--k0:#2a9d3f;--kp:#d62828;--gv:#7b2cbf}
@@ -23,40 +23,31 @@ select{padding:4px;background:var(--bg);color:var(--fg);border:1px solid var(--b
 .row{display:flex;flex-wrap:wrap;gap:4px 12px}
 .row label{display:inline-flex;align-items:center;gap:4px;margin:3px 0;color:var(--fg);font-size:13px}
 button{padding:5px 10px;border:1px solid var(--bd);background:var(--bg);color:var(--fg);border-radius:6px;cursor:pointer}
-.seg label{border:1px solid var(--bd);border-radius:6px;padding:3px 9px;background:var(--bg);cursor:pointer}
-.seg input{display:none}.seg input:checked+span{font-weight:700;color:var(--sph)}
 #ro{font:12px ui-monospace,Menlo,Consolas,monospace;line-height:1.7;max-height:110px;overflow:auto}
 #ro b{font-weight:600}
 .sw{font-weight:700}.sw.y{color:var(--k0)}.sw.n{color:var(--kp)}
 .legend{font-size:11px;color:var(--mut);display:flex;flex-wrap:wrap;gap:3px 10px;margin-top:6px}
 .legend i{display:inline-block;width:10px;height:3px;vertical-align:middle;margin-right:4px}
 </style></head><body>
-<h1>Precessional Switching interaktiv</h1>
-<div class="sub">Weicher Ferromagnet (dünner Film, Ebene x–y), Start M ∥ x̂. Feld unter Winkel θ zu x̂ (optimal: 90° = entlang ŷ). Präzession um das effektive Feld; bei Puls von ~½ Präzessionsperiode kippt M fast auf −x̂ (Switching). Dämpfung α relaxiert M Richtung Energieminimum. h = H₀/M<sub>s</sub>, h<sub>K</sub> = H<sub>K</sub>/M<sub>s</sub>. Thermisch-freie, uniforme Präzession (LLG, reduzierte Zeit τ = γM<sub>s</sub>t).</div>
+<h1>Präzessionales Schalten interaktiv (LLG)</h1>
+<div class="sub">Weicher Ferromagnet (dünner Film, Ebene x–y), Start M ∥ x̂. Feld in der yz-Ebene, Winkel φ von ŷ (in-plane, optimal für Switching) zu ±ẑ. Ungedämpfte (α=0) Präzession um das effektive Feld → energieerhaltender orangener Orbit auf der Kugel. h = H₀/M<sub>s</sub>, h<sub>K</sub> = H<sub>K</sub>/M<sub>s</sub>; unterhalb der Schwelle h<sub>K</sub>/2 bleibt der Orbit in der +x-Halbkugel (kein Schalten), oberhalb kreuzt er −x. Reduzierte Zeit τ = γM<sub>s</sub>t. Ziehen zum Drehen.</div>
 <div class="wrap">
  <div class="cvbox"><canvas id="cv"></canvas></div>
  <div class="panel">
   <div class="card">
    <label>Feldstärke (reduziert) h = H₀/M<sub>s</sub> = <b id="hv"></b></label>
    <input id="h" autocomplete="off" type="range" min="0.1" max="1.5" step="0.01" value="1.0">
-   <label>Feldwinkel zu x (easy axis) θ = <b id="tv"></b>°</label>
-   <input id="th" autocomplete="off" type="range" min="-180" max="180" step="1" value="90">
+   <label>Feldwinkel in der yz-Ebene φ (ŷ → ẑ) = <b id="pv"></b>°</label>
+   <input id="ph" autocomplete="off" type="range" min="-90" max="90" step="1" value="0">
    <label>In-plane Anisotropie h<sub>K</sub> = H<sub>K</sub>/M<sub>s</sub> = <b id="kv"></b> &nbsp;(<span class="sw n">Threshold h<sub>K</sub>/2 = <b id="ktv"></b></span>)</label>
    <input id="hk" autocomplete="off" type="range" min="0" max="2" step="0.01" value="0">
-   <label>Dämpfung (Gilbert) α = <b id="av"></b> &nbsp;· 10⁻²</label>
-   <input id="al" autocomplete="off" type="range" min="0" max="10" step="0.1" value="1">
-   <label>Pulslänge τ<sub>pulse</sub> (in Einheiten der Halb-Flip-Zeit τ<sub>½</sub>) = <b id="pv"></b></label>
-   <input id="pu" autocomplete="off" type="range" min="0.3" max="1.8" step="0.01" value="1.0">
+   <label>Dämpfung (Gilbert) α = <b id="av"></b> &nbsp;· 10⁻² &nbsp;(o: energieerhaltender Orbit)</label>
+   <input id="al" autocomplete="off" type="range" min="0" max="10" step="0.1" value="0">
   </div>
   <div class="card">
-   <div class="row seg" id="tg">
-    <label><input type="radio" name="fld" value="cont" checked><span>Feld dauerhaft an</span></label>
-    <label><input type="radio" name="fld" value="pulse"><span>Feld-Puls</span></label>
-   </div>
-   <div class="row" style="margin-top:6px">
-    <label><input type="checkbox" id="orb" autocomplete="off" checked> Energie-Orbit (α=0)</label>
-    <label><input type="checkbox" id="trl" autocomplete="off" checked> Spur (Trail)</label>
-    <label><input type="checkbox" id="auto" autocomplete="off"> Auto-Drehung</label>
+   <div class="row" style="margin-top:0">
+    <label><input type="checkbox" id="orb" autocomplete="off" checked> Energie-Orbit</label>
+    <label><input type="checkbox" id="trl" autocomplete="off" checked> Spur</label>
     <button id="rst">Zurücksetzen</button>
     <button id="pbtn">Pause</button>
    </div>
@@ -66,8 +57,8 @@ button{padding:5px 10px;border:1px solid var(--bd);background:var(--bg);color:va
     <span><i style="background:var(--kp)"></i>Magnetisierung m</span>
     <span><i style="background:var(--k0)"></i>Feld H</span>
     <span><i style="background:#e67e22"></i>easy axis x</span>
-    <span><i style="background:var(--gv)"></i>Energie-Orbit</span>
-    <span><i style="background:#d6336c"></i>Trail (α&gt;0)</span>
+    <span><i style="background:var(--gv)"></i>Energie-Orbit (α=0)</span>
+    <span><i style="background:#d6336c"></i>Spur (m über Zeit)</span>
    </div>
   </div>
  </div>
@@ -80,71 +71,60 @@ const mul=(A,B)=>A.map(r=>[0,1,2].map(j=>r[0]*B[0][j]+r[1]*B[1][j]+r[2]*B[2][j])
 mv=(A,v)=>A.map(r=>r[0]*v[0]+r[1]*v[1]+r[2]*v[2]),
 Rx=t=>{const c=Math.cos(t),s=Math.sin(t);return[[1,0,0],[0,c,-s],[0,s,c]]},
 Rz=t=>{const c=Math.cos(t),s=Math.sin(t);return[[c,-s,0],[s,c,0],[0,0,1]]};
-// ---- Physics: reduced LLG (LL form), alpha damping. h_eff reduced by Ms.
-function heff(m,h,hK,th){const c=Math.cos(th),s=Math.sin(th);
-  return [h*c + hK*m[0], h*s, -m[2]];}                    // aniso along x, dipolar out-of-plane -mz
-function dmd(m,h,hK,th,alpha,fieldOn){const H=fieldOn?heff(m,h,hK,th):heff(m,0,hK,th);
+// ---- Physics: reduced LLG (LL form), optional damping. h_eff reduced by Ms.
+// Field lies in the yz-plane at polar angle ph from y toward z. Aniso easy axis x, dipolar out-of-plane -mz.
+function heff(m,h,hK,ph){const c=Math.cos(ph),s=Math.sin(ph);
+  return [hK*m[0], h*c, h*s - m[2]];}
+function dmd(m,h,hK,ph,alpha){const H=heff(m,h,hK,ph);
   const pre=cross(m,H),dd=cross(m,pre);
   return [-pre[0]-alpha*dd[0],-pre[1]-alpha*dd[1],-pre[2]-alpha*dd[2]];}
-function step(m,h,hK,th,alpha,dt,fieldOn){
-  const k1=dmd(m,h,hK,th,alpha,fieldOn),m2=m.map((x,i)=>x+.5*dt*k1[i]),k2=dmd(m2,h,hK,th,alpha,fieldOn);
-  const m3=m.map((x,i)=>x+.5*dt*k2[i]),k3=dmd(m3,h,hK,th,alpha,fieldOn);
-  const m4=m.map((x,i)=>x+dt*k3[i]),k4=dmd(m4,h,hK,th,alpha,fieldOn);
+function step(m,h,hK,ph,alpha,dt){
+  const k1=dmd(m,h,hK,ph,alpha),m2=m.map((x,i)=>x+.5*dt*k1[i]),k2=dmd(m2,h,hK,ph,alpha);
+  const m3=m.map((x,i)=>x+.5*dt*k2[i]),k3=dmd(m3,h,hK,ph,alpha);
+  const m4=m.map((x,i)=>x+dt*k3[i]),k4=dmd(m4,h,hK,ph,alpha);
   const out=m.map((x,i)=>x+dt/6*(k1[i]+2*k2[i]+2*k3[i]+k4[i]));const n=norm(out)||1;return out.map(x=>x/n);}
-function energy(m,h,hK,th){const c=Math.cos(th),s=Math.sin(th);
-  return -h*(m[0]*c+m[1]*s)+0.5*m[2]*m[2]+0.5*hK*(m[1]*m[1]+m[2]*m[2]);}
-// Energy-conserving closed orbit (alpha=0), precomputed for current h,hK,th from m0=[1,0,0].
-let orbit=[];
-function buildOrbit(h,hK,th){const dt=0.004;let m=[1,0,0];const pts=[];
-  const perI=Math.max(1,Math.round(TAU/Math.max(h,1e-3)/dt)); // ~1 period in steps
+function energy(m,h,hK,ph){const c=Math.cos(ph),s=Math.sin(ph);
+  return -h*(m[1]*c+m[2]*s)+0.5*m[2]*m[2]+0.5*hK*(m[1]*m[1]+m[2]*m[2]);}
+// Energy-conserving closed orbit (alpha=0), precomputed for current h,hK,ph from m0=[1,0,0].
+let orbit=[],orbitMinMx=1;
+function buildOrbit(h,hK,ph){const dt=0.004;let m=[1,0,0];const pts=[];let mn=1;
+  const perI=Math.max(1,Math.round(TAU/Math.hypot(h,h)/dt)); // ~1 period in steps
   const maxSteps=perI*6;
-  for(let i=0;i<maxSteps;i++){m=step(m,h,hK,th,0,dt,true);
-    if(i>=Math.round(perI*1.1)&&m[0]>0.9990&&Math.abs(m[1])<0.03&&Math.abs(m[2])<0.03)break; // closed once ~1.1 periods
+  for(let i=0;i<maxSteps;i++){m=step(m,h,hK,ph,0,dt);if(m[0]<mn)mn=m[0];
+    if(i>=Math.round(perI*1.1)&&m[0]>0.9990&&Math.abs(m[1])<0.03&&Math.abs(m[2])<0.03)break; // closed ~1.1 periods
     if(i>=Math.round(perI*0.4))pts.push(m.slice());}
-  return pts;}
-// --- Precession period estimate: |heff(m0)|
-function omega(h,hK,th){const H=heff([1,0,0],h,hK,th);return Math.hypot(...H);}
+  orbitMinMx=mn;return pts;}
 
 // ---- State ----
-let mode='cont', playing=true, t=0, m=[1,0,0], trail=[], dirty=1, yaw=.6, pitch=.45, dpr=1;
-const Rc=[[1,0,0],[0,1,0],[0,0,1]],Rb=[[1,0,0],[0,1,0],[0,0,1]];
-// --- Half-flip time (large-angle): alpha=0, time until m first crosses mx=0 starting from +x.
-// This is the physically relevant pulse unit (VL: half a precession period flips M to -x).
-function flipTime(h,hK,th){const dt=0.001;let m=[1,0,0],t=0;
-  for(;t<60;t+=dt){m=step(m,h,hK,th,0,dt,true);if(m[0]<0)return t;}
-  return 60;}
-const param=()=>({h:+$('h').value,hk:+$('hk').value,alpha:(+$('al').value)/100,th:+$('th').value*Math.PI/180,pu:+$('pu').value});
-let halfT=flipTime(param().h,param().hk,param().th);
-const fieldOn=()=>mode==='cont'||(mode==='pulse'&& t < param().pu*halfT);
+let playing=true, t=0, m=[1,0,0], trail=[], dirty=1, yaw=.6, pitch=.45, dpr=1;
+const param=()=>({h:+$('h').value,hk:+$('hk').value,ph:+$('ph').value*Math.PI/180,alpha:(+$('al').value)/100});
+function orbitLen(){const p=param();return buildOrbit(p.h,p.hk,p.ph);}
 function reset(){m=[1,0,0];t=0;trail=[];orbit=orbitLen();yaw=.6;pitch=.45;dirty=1;}
-function orbitLen(){const p=param();return buildOrbit(p.h,p.hk,p.th);}
 function view(){return mul(Rx(pitch),Rz(yaw));}
 // ---- 3D projection (Ewald style) ----
 function draw(){const w=cv.clientWidth,hh=cv.clientHeight,cs=getComputedStyle(document.documentElement);
  const col=n=>cs.getPropertyValue(n).trim();ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,hh);
  const s=Math.min(w,hh)/2*.9,cx=w/2,cy=hh/2,Rv=view();
  const P=p=>{const a=mv(Rv,p);return [cx+s*a[0],cy-s*a[2],a[1]];};
- // sphere shell (circle) + grid
  ctx.strokeStyle=col('--sph');ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,s,0,TAU);ctx.stroke();
  ctx.strokeStyle=col('--sph');ctx.globalAlpha=.28;ctx.lineWidth=1;
  const poly=f=>{ctx.beginPath();for(let i=0;i<=64;i++){const t=i/64*TAU,p=f(t),q=P(p);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);}ctx.stroke();};
  for(let r=-60;r<=60;r+=30)poly(t=>[Math.cos(r*Math.PI/180)*Math.cos(t),Math.cos(r*Math.PI/180)*Math.sin(t),Math.sin(r*Math.PI/180)]);
  for(let n=0;n<12;n++){const ph=n*Math.PI/6;poly(t=>[Math.cos(t)*Math.cos(ph),Math.cos(t)*Math.sin(ph),Math.sin(t)]);}
  ctx.globalAlpha=1;
- // axes arrows x,y,z + labels
  const as=[['x','#e67e22',[1,0,0]],['y','#16a085',[0,1,0]],['z','#7b2cbf',[0,0,1]]];
  for(const [name,c,v] of as){const a=P(v.map(x=>x*-1)),b=P(v.map(x=>x*1.15));arrow(a,b,c,1.4);
    ctx.fillStyle=c;ctx.font='bold 13px system-ui';ctx.fillText(name,b[0]+5,b[1]-5);}
- // energy orbit (static alpha=0 closed curve), magenta-ish grey
+ // energy orbit (alpha=0 closed curve)
  if($('orb').checked){ctx.strokeStyle=col('--gv');ctx.globalAlpha=.8;ctx.lineWidth=2;ctx.beginPath();
    for(let i=0;i<orbit.length;i++){const q=P(orbit[i]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);}ctx.stroke();
    ctx.globalAlpha=1;
    ctx.fillStyle=col('--gv');for(const mp of [0,Math.floor(orbit.length/2)]){const q=P(orbit[mp]);ctx.beginPath();ctx.arc(q[0],q[1],3,0,TAU);ctx.fill();}}
- // trail (alpha>0 actual), pink
+ // trail (m over time, alpha=0), pink
  if($('trl').checked&&trail.length>1){ctx.strokeStyle='#d6336c';ctx.globalAlpha=.85;ctx.lineWidth=1.6;ctx.beginPath();
    for(let i=0;i<trail.length;i++){const q=P(trail[i]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);}ctx.stroke();ctx.globalAlpha=1;}
- // field vector (if on)
- if(fieldOn()){const f=appliedFieldVec();const a=P(f.map(x=>x*-1)),b=P(f.map(x=>x*1.25));arrow(a,b,col('--k0'),2.2);
+ // field vector
+ {const f=appliedFieldVec();const a=P(f.map(x=>x*-1)),b=P(f.map(x=>x*1.25));arrow(a,b,col('--k0'),2.2);
    ctx.fillStyle=col('--k0');ctx.font='bold 14px system-ui';ctx.fillText('H',b[0]+6,b[1]-6);}
  // easy axis dashed
  const ex=P(mul(Rv,[1.25,0,0])),e0=P(mul(Rv,[-1.25,0,0]));ctx.strokeStyle='#e67e22';ctx.setLineDash([6,5]);ctx.lineWidth=1.4;
@@ -153,18 +133,16 @@ function draw(){const w=cv.clientWidth,hh=cv.clientHeight,cs=getComputedStyle(do
  const mt=P(m.map(x=>x*1.1));arrow(P([0,0,0]),mt,col('--kp'),3);ctx.fillStyle=col('--kp');
  ctx.font='bold 15px system-ui';ctx.fillText('m',mt[0]+7,mt[1]-7);
  // readouts
- const p=param(),e=energy(m,p.h,p.hk,p.th),fc=fieldOn();
- const sw=m[0]<-0.5;
- $('hv').textContent=p.h.toFixed(2);$('tv').textContent=(Math.round(+$('th').value));$('kv').textContent=p.hk.toFixed(2);
- $('av').textContent=p.alpha.toFixed(2);$('pu').textContent=p.pu.toFixed(2);$('ktv').textContent=(p.hk/2).toFixed(2);
+ const p=param(),e=energy(m,p.h,p.hk,p.ph),crosses=orbitMinMx<=-0.5;
+ $('hv').textContent=p.h.toFixed(2);$('pv').textContent=(Math.round(+$('ph').value));$('kv').textContent=p.hk.toFixed(2);
+ $('av').textContent=p.alpha.toFixed(2);$('ktv').textContent=(p.hk/2).toFixed(2);
  $('ro').innerHTML=
   'm = ('+m[0].toFixed(3)+', '+m[1].toFixed(3)+', '+m[2].toFixed(3)+') &nbsp; |m|='+norm(m).toFixed(4)+'<br>'+
-  'e/μ₀M<sub>s</sub>² = '+e.toFixed(4)+' &nbsp;(Start '+energy([1,0,0],p.h,p.hk,p.th).toFixed(4)+')<br>'+
-  'Halb-Flip-Zeit τ<sub>½</sub> = '+(halfT>=60?'n. erreicht (h&lt;h<sub>K</sub>/2, kein Switching)':halfT.toFixed(2)+' &nbsp;(Pulslänge 1.0)')+'<br>'+
-  'Feld '+(fc?'AN':'aus · nur Anisotropie/Dipolar')+' &nbsp; τ = '+t.toFixed(2)+' &nbsp; Pulsende τ = '+p.pu*halfT.toFixed(2)+'<br>'+
-  '<span class="sw '+(sw?'y':'n')+'">'+(sw?'SWITCHED (m<sub>x</sub>&lt;0)':'nicht geswitcht (m<sub>x</sub>≥0)')+'</span>';
+  'e/μ₀M<sub>s</sub>² = '+e.toFixed(4)+' &nbsp;(Start '+energy([1,0,0],p.h,p.hk,p.ph).toFixed(4)+')<br>'+
+  'Orbit min m<sub>x</sub> = '+orbitMinMx.toFixed(3)+' &nbsp; τ = '+t.toFixed(2)+'<br>'+
+  '<span class="sw '+(crosses?'y':'n')+'">'+(crosses?'Orbit kreuzt −x · Schalten möglich':'Orbit bleibt in +x-Halbkugel · kein Schalten')+'</span>';
 }
-function appliedFieldVec(){const p=param();return [p.h*Math.cos(p.th),p.h*Math.sin(p.th),0];}
+function appliedFieldVec(){const p=param(),c=Math.cos(p.ph),s=Math.sin(p.ph);return [0,p.h*c,p.h*s];}
 function arrow(a,b,c,w,dash){ctx.strokeStyle=c;ctx.fillStyle=c;ctx.lineWidth=w;ctx.setLineDash(dash||[]);
  ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.setLineDash([]);
  const tt=Math.atan2(b[1]-a[1],b[0]-a[0]);ctx.beginPath();ctx.moveTo(b[0],b[1]);
@@ -176,21 +154,16 @@ let drag=null;
 cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY};cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';});
 cv.addEventListener('pointerup',()=>{drag=null;cv.style.cursor='grab';});
 cv.addEventListener('pointermove',e=>{if(!drag)return;yaw+=(e.clientX-drag.x)*.01;pitch=Math.max(-1.5,Math.min(1.5,pitch+(e.clientY-drag.y)*.01));drag={x:e.clientX,y:e.clientY};dirty=1;});
-document.querySelectorAll('input[name=fld]').forEach(r=>r.onchange=()=>{mode=r.value;reset();});
-function paramDot(){
-  orbit=orbitLen();halfT=flipTime(+$('h').value,+$('hk').value,+$('th').value*Math.PI/180);
-  m=[1,0,0];t=0;trail=[];dirty=1;}
-['h','th','hk'].forEach(i=>$(i).oninput=()=>{dirty=1;paramDot();});
-['al','pu'].forEach(i=>$(i).oninput=()=>{dirty=1;if(i==='al'&&+$('al').value==0){trail=[];$('trl').checked=true;}});
+function paramDot(){orbit=orbitLen();m=[1,0,0];t=0;trail=[];dirty=1;}
+['h','ph','hk'].forEach(i=>$(i).oninput=()=>{dirty=1;paramDot();});
+['al'].forEach(i=>$(i).oninput=()=>{dirty=1;if(+$('al').value==0){trail=[];$('trl').checked=true;}});
 $('orb').onchange=()=>dirty=1;$('trl').onchange=()=>dirty=1;
 $('rst').onclick=reset;
 $('pbtn').onclick=()=>{playing=!playing;$('pbtn').textContent=playing?'Pause':'Play';};
 reset();
-(function frame(){if(playing){const p=param(),dt=0.012,fld=fieldOn();
-  // substep for accuracy
-  m=step(m,p.h,p.hk,p.th,p.alpha,dt,fld);t+=dt;
+(function frame(){if(playing){const p=param(),dt=0.012;
+  m=step(m,p.h,p.hk,p.ph,p.alpha,dt);t+=dt;
   trail.push(m.slice());if(trail.length>600)trail.shift();dirty=1;}
- if($('auto').checked){yaw+=.004;dirty=1;}
  if(dirty){dirty=0;draw();}requestAnimationFrame(frame);})();
 </script>
 <script src="../../nav.js"></script>
