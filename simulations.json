@@ -12,5 +12,12 @@
     "desc": "Single-domain particle with uniaxial anisotropy. Sweep the field and watch the magnetization track the energy minimum, flip, and trace the hysteresis loop. Tune the field angle, anisotropy strength and field amplitude; show energy, vector and m(h) panels.",
     "tags": ["magnetism", "hysteresis", "Stoner-Wohlfarth"],
     "on": true
+  },
+  {
+    "slug": "precessional-switching",
+    "title": "Precessional Switching (LLG)",
+    "desc": "Thin-film macrospin: tune the field and in-plane anisotropy and drive the Landau-Lifshitz-Gilbert equation. Watch M precess around the effective field and flip with a field pulse (half a precession period), see the energy-conserving orbit and the h_K/2 switching threshold. Interactive 3D sphere.",
+    "tags": ["magnetism", "LLG", "precessional switching", "FMR"],
+    "on": true
   }
 ]
