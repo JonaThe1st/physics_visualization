@@ -19,5 +19,12 @@
     "desc": "Thin-film macrospin: tune the field and in-plane anisotropy and drive the Landau-Lifshitz-Gilbert equation. Watch M precess around the effective field and flip with a field pulse (half a precession period), see the energy-conserving orbit and the h_K/2 switching threshold. Interactive 3D sphere.",
     "tags": ["magnetism", "LLG", "precessional switching", "FMR"],
     "on": true
+  },
+  {
+    "slug": "fmr-simulation",
+    "title": "FMR – Magnetization Precession",
+    "desc": "Ferromagnetic resonance: the magnetization precesses around the effective field until damping returns it to equilibrium. Pick a geometry (sphere, thin film, needle, ellipsoid), static field and damping, and watch the orbit in 3D or driven by an RF field. Shows the Kittel resonance frequency and decay time.",
+    "tags": ["magnetism", "FMR", "LLG", "Kittel"],
+    "on": true
   }
 ]
