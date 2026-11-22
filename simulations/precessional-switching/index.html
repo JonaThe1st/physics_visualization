@@ -1,7 +1,7 @@
 <!doctype html>
-<html lang="de"><head><meta charset="utf-8">
+<html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Präzessionales Schalten (LLG) – interaktiv</title>
+<title>Precessional Switching (LLG) – interactive</title>
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 --bg:#fff;--fg:#1d2330;--mut:#667085;--card:#f3f5f9;--bd:#d9dee8;--pt:#2b2f3a;--grey:#b3bac8;--sph:#1f6fd1;--k0:#2a9d3f;--kp:#d62828;--gv:#7b2cbf}
@@ -29,36 +29,36 @@ button{padding:5px 10px;border:1px solid var(--bd);background:var(--bg);color:va
 .legend{font-size:11px;color:var(--mut);display:flex;flex-wrap:wrap;gap:3px 10px;margin-top:6px}
 .legend i{display:inline-block;width:10px;height:3px;vertical-align:middle;margin-right:4px}
 </style></head><body>
-<h1>Präzessionales Schalten interaktiv (LLG)</h1>
-<div class="sub">Weicher Ferromagnet (dünner Film, Ebene x–y), Start M ∥ x̂. Feld in der yz-Ebene, Winkel φ von ŷ (in-plane, optimal für Switching) zu ±ẑ. Ungedämpfte (α=0) Präzession um das effektive Feld → energieerhaltender orangener Orbit auf der Kugel. h = H₀/M<sub>s</sub>, h<sub>K</sub> = H<sub>K</sub>/M<sub>s</sub>; unterhalb der Schwelle h<sub>K</sub>/2 bleibt der Orbit in der +x-Halbkugel (kein Schalten), oberhalb kreuzt er −x. Reduzierte Zeit τ = γM<sub>s</sub>t. Ziehen zum Drehen.</div>
+<h1>Precessional Switching interactive (LLG)</h1>
+<div class="sub">Soft ferromagnet (thin film, plane x–y), initial M ∥ x̂. Field in the yz-plane at polar angle φ from ŷ (in-plane, optimal for switching) to ±ẑ. Undamped (α=0) precession about the effective field → energy-conserving orbit on the sphere. h = H₀/M<sub>s</sub>, h<sub>K</sub> = H<sub>K</sub>/M<sub>s</sub>; below the threshold h<sub>K</sub>/2 the orbit stays in the +x hemisphere (no switching), above it crosses −x. Reduced time τ = γM<sub>s</sub>t. Drag to rotate.</div>
 <div class="wrap">
  <div class="cvbox"><canvas id="cv"></canvas></div>
  <div class="panel">
   <div class="card">
-   <label>Feldstärke (reduziert) h = H₀/M<sub>s</sub> = <b id="hv"></b></label>
+   <label>Field strength (reduced) h = H₀/M<sub>s</sub> = <b id="hv"></b></label>
    <input id="h" autocomplete="off" type="range" min="0.1" max="1.5" step="0.01" value="1.0">
-   <label>Feldwinkel in der yz-Ebene φ (ŷ → ẑ) = <b id="pv"></b>°</label>
+   <label>Field angle in the yz-plane φ (ŷ → ẑ) = <b id="pv"></b>°</label>
    <input id="ph" autocomplete="off" type="range" min="-90" max="90" step="1" value="0">
-   <label>In-plane Anisotropie h<sub>K</sub> = H<sub>K</sub>/M<sub>s</sub> = <b id="kv"></b> &nbsp;(<span class="sw n">Threshold h<sub>K</sub>/2 = <b id="ktv"></b></span>)</label>
+   <label>In-plane anisotropy h<sub>K</sub> = H<sub>K</sub>/M<sub>s</sub> = <b id="kv"></b> &nbsp;(<span class="sw n">Threshold h<sub>K</sub>/2 = <b id="ktv"></b></span>)</label>
    <input id="hk" autocomplete="off" type="range" min="0" max="2" step="0.01" value="0">
-   <label>Dämpfung (Gilbert) α = <b id="av"></b> &nbsp;· 10⁻² &nbsp;(o: energieerhaltender Orbit)</label>
+   <label>Damping (Gilbert) α = <b id="av"></b> &nbsp;· 10⁻² &nbsp;(0: energy-conserving orbit)</label>
    <input id="al" autocomplete="off" type="range" min="0" max="10" step="0.1" value="0">
   </div>
   <div class="card">
    <div class="row" style="margin-top:0">
-    <label><input type="checkbox" id="orb" autocomplete="off" checked> Energie-Orbit</label>
-    <label><input type="checkbox" id="trl" autocomplete="off" checked> Spur</label>
-    <button id="rst">Zurücksetzen</button>
+    <label><input type="checkbox" id="orb" autocomplete="off" checked> Energy orbit</label>
+    <label><input type="checkbox" id="trl" autocomplete="off" checked> Trail</label>
+    <button id="rst">Reset</button>
     <button id="pbtn">Pause</button>
    </div>
   </div>
   <div class="card"><label style="margin-top:0">Readouts</label><div id="ro"></div>
    <div class="legend">
-    <span><i style="background:var(--kp)"></i>Magnetisierung m</span>
-    <span><i style="background:var(--k0)"></i>Feld H</span>
+    <span><i style="background:var(--kp)"></i>Magnetization m</span>
+    <span><i style="background:var(--k0)"></i>Field H</span>
     <span><i style="background:#e67e22"></i>easy axis x</span>
-    <span><i style="background:var(--gv)"></i>Energie-Orbit (α=0)</span>
-    <span><i style="background:#d6336c"></i>Spur (m über Zeit)</span>
+    <span><i style="background:var(--gv)"></i>Energy orbit (α=0)</span>
+    <span><i style="background:#d6336c"></i>Trail (m over time)</span>
    </div>
   </div>
  </div>
@@ -140,7 +140,7 @@ function draw(){const w=cv.clientWidth,hh=cv.clientHeight,cs=getComputedStyle(do
   'm = ('+m[0].toFixed(3)+', '+m[1].toFixed(3)+', '+m[2].toFixed(3)+') &nbsp; |m|='+norm(m).toFixed(4)+'<br>'+
   'e/μ₀M<sub>s</sub>² = '+e.toFixed(4)+' &nbsp;(Start '+energy([1,0,0],p.h,p.hk,p.ph).toFixed(4)+')<br>'+
   'Orbit min m<sub>x</sub> = '+orbitMinMx.toFixed(3)+' &nbsp; τ = '+t.toFixed(2)+'<br>'+
-  '<span class="sw '+(crosses?'y':'n')+'">'+(crosses?'Orbit kreuzt −x · Schalten möglich':'Orbit bleibt in +x-Halbkugel · kein Schalten')+'</span>';
+  '<span class="sw '+(crosses?'y':'n')+'">'+(crosses?'Orbit crosses −x · switching possible':'Orbit stays in +x hemisphere · no switching')+'</span>';
 }
 function appliedFieldVec(){const p=param(),c=Math.cos(p.ph),s=Math.sin(p.ph);return [0,p.h*c,p.h*s];}
 function arrow(a,b,c,w,dash){ctx.strokeStyle=c;ctx.fillStyle=c;ctx.lineWidth=w;ctx.setLineDash(dash||[]);

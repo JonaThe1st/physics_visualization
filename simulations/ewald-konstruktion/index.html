@@ -1,7 +1,7 @@
 <!doctype html>
-<html lang="de"><head><meta charset="utf-8">
+<html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ewald-Konstruktion interaktiv</title>
+<title>Ewald Construction interactive</title>
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 --bg:#fff;--fg:#1d2330;--mut:#667085;--card:#f3f5f9;--bd:#d9dee8;--pt:#2b2f3a;--grey:#b3bac8;--sph:#1f6fd1;--k0:#2a9d3f;--kp:#d62828;--gv:#7b2cbf}
@@ -27,40 +27,40 @@ button{padding:5px 10px;border:1px solid var(--bd);background:var(--bg);color:va
 .seg label{border:1px solid var(--bd);border-radius:6px;padding:3px 9px;background:var(--bg);cursor:pointer}
 .seg input{display:none}.seg input:checked+span{font-weight:700;color:var(--sph)}
 </style></head><body>
-<h1 style="padding-left: 60px;">Ewald-Konstruktion interaktiv</h1>
-<div style="padding-left: 60px;" class="sub">Reflex, wenn ein reziproker Gitterpunkt auf der Kugel liegt: |k′| = |k₀|, G = k′ − k₀. Einheiten: Gitterkonstante a = 1, k = 1/λ.</div>
+<h1 style="padding-left: 60px;">Ewald Construction interactive</h1>
+<div style="padding-left: 60px;" class="sub">A reflection occurs when a reciprocal-lattice point lies on the sphere: |k′| = |k₀|, G = k′ − k₀. Units: lattice constant a = 1, k = 1/λ.</div>
 <div class="wrap">
  <div class="cvbox"><canvas id="cv"></canvas></div>
  <div class="panel">
   <div class="card">
    <div class="row seg"><label><input type="radio" name="md" value="2d"><span>2D</span></label><label><input type="radio" name="md" value="3d" checked><span>3D</span></label></div>
-   <label>Kristallstruktur</label><select id="st" autocomplete="off"></select>
-   <label>Wellenlänge λ/a = <b id="lv"></b> &nbsp;(k = <b id="kv"></b>)</label>
+   <label>Crystal structure</label><select id="st" autocomplete="off"></select>
+   <label>Wavelength λ/a = <b id="lv"></b> &nbsp;(k = <b id="kv"></b>)</label>
    <input id="lam" autocomplete="off" type="range" min="0.25" max="1.5" step="0.01" value="0.7">
-   <label>Dicke der Kugelschale (Toleranz) = <b id="tv"></b></label>
+   <label>Shell thickness (tolerance) = <b id="tv"></b></label>
    <input id="tol" autocomplete="off" type="range" min="0.01" max="0.25" step="0.005" value="0.06">
-   <label>Kristalldrehung um z = <b id="pv"></b>°</label>
+   <label>Crystal rotation about z = <b id="pv"></b>°</label>
    <input id="phi" autocomplete="off" type="range" min="0" max="360" step="0.5" value="20">
-   <label>k₀ Azimut (Drehung in der xy-Ebene) = <b id="azv"></b>°</label>
+   <label>k₀ azimuth (rotation in the xy-plane) = <b id="azv"></b>°</label>
    <input id="az" autocomplete="off" type="range" min="-180" max="180" step="0.5" value="0">
-   <label id="ell">k₀ Elevation (Neigung aus der xy-Ebene) = <b id="elv"></b>°</label>
+   <label id="ell">k₀ elevation (tilt out of the xy-plane) = <b id="elv"></b>°</label>
    <input id="el" autocomplete="off" type="range" min="-90" max="90" step="0.5" value="0">
   </div>
   <div class="card">
-   <label style="margin-top:0">Ziehen mit der Maus/dem Finger dreht:</label>
+   <label style="margin-top:0">Drag with mouse/touch rotates:</label>
    <div class="row seg" id="tg"></div>
    <div class="row" style="margin-top:6px">
-    <label><input type="checkbox" id="auto" autocomplete="off"> Auto-Drehung</label>
-    <label><input type="checkbox" id="lim" checked> Begrenzungskugel (2k)</label>
-    <label><input type="checkbox" id="idx" checked> Indizes</label>
-    <label><input type="checkbox" id="axs" autocomplete="off" checked> Kristallachsen (a*, b*, c*)</label>
-    <label><input type="checkbox" id="cel" autocomplete="off" checked> Elementarzelle (real, Inset unten rechts)</label>
-    <label><input type="checkbox" id="rcl" autocomplete="off" checked> Reziproke Elementarzelle (am Ursprung)</label>
-    <button id="rst">Zurücksetzen</button>
+    <label><input type="checkbox" id="auto" autocomplete="off"> Auto-rotation</label>
+    <label><input type="checkbox" id="lim" checked> Limiting sphere (2k)</label>
+    <label><input type="checkbox" id="idx" checked> Indices</label>
+    <label><input type="checkbox" id="axs" autocomplete="off" checked> Crystal axes (a*, b*, c*)</label>
+    <label><input type="checkbox" id="cel" autocomplete="off" checked> Unit cell (real, bottom-right inset)</label>
+    <label><input type="checkbox" id="rcl" autocomplete="off" checked> Reciprocal unit cell (at origin)</label>
+    <button id="rst">Reset</button>
    </div>
   </div>
-  <div class="card"><label style="margin-top:0"><b id="nh"></b> Reflexe &nbsp;(hkl · 2θ · d/a)</label><div id="ref"></div></div>
-  <div class="sub" style="padding:0">Kugel drehen = Strahlrichtung relativ zum Kristall ändern; das ist äquivalent zur umgekehrten Kristalldrehung. Bei bcc/fcc gelten die Indizes der kubischen Elementarzelle mit Auslöschungsregeln.</div>
+  <div class="card"><label style="margin-top:0"><b id="nh"></b> reflections &nbsp;(hkl · 2θ · d/a)</label><div id="ref"></div></div>
+  <div class="sub" style="padding:0">Rotating the sphere changes the beam direction relative to the crystal; this is equivalent to rotating the crystal in the opposite sense. For bcc/fcc the indices of the cubic unit cell apply together with the extinction rules.</div>
  </div>
 </div>
 <script>
@@ -70,13 +70,13 @@ mv=(A,v)=>A.map(r=>r[0]*v[0]+r[1]*v[1]+r[2]*v[2]),T=A=>[0,1,2].map(i=>[A[0][i],A
 Rx=t=>{const c=Math.cos(t),s=Math.sin(t);return[[1,0,0],[0,c,-s],[0,s,c]]},
 Rz=t=>{const c=Math.cos(t),s=Math.sin(t);return[[c,-s,0],[0,0,0].map((_,i)=>[s,c,0][i]),[0,0,1]]};
 const q3=Math.sqrt(3),e=[[1,0,0],[0,1,0],[0,0,1]];
-const ST={'2d':{sq:{n:'Quadratisch',B:[e[0],e[1]]},re:{n:'Rechteckig (b = 1,5 a)',B:[e[0],[0,2/3,0]]},hx:{n:'Hexagonal',B:[[1,1/q3,0],[0,2/q3,0]]}},
-'3d':{sc:{n:'Einfach kubisch (sc)',B:e},bcc:{n:'Raumzentriert kubisch (bcc)',B:e,f:(h,k,l)=>(h+k+l)%2==0},
-fcc:{n:'Flächenzentriert kubisch (fcc)',B:e,f:(h,k,l)=>((h&1)==(k&1))&&((k&1)==(l&1))},
-hx:{n:'Hexagonal (c/a = 1,63)',B:[[1,1/q3,0],[0,2/q3,0],[0,0,1/1.633]]}}};
+const ST={'2d':{sq:{n:'Square',B:[e[0],e[1]]},re:{n:'Rectangular (b = 1.5 a)',B:[e[0],[0,2/3,0]]},hx:{n:'Hexagonal',B:[[1,1/q3,0],[0,2/q3,0]]}},
+'3d':{sc:{n:'Simple cubic (sc)',B:e},bcc:{n:'Body-centred cubic (bcc)',B:e,f:(h,k,l)=>(h+k+l)%2==0},
+fcc:{n:'Face-centred cubic (fcc)',B:e,f:(h,k,l)=>((h&1)==(k&1))&&((k&1)==(l&1))},
+hx:{n:'Hexagonal (c/a = 1.63)',B:[[1,1/q3,0],[0,2/q3,0],[0,0,1/1.633]]}}};
 let mode='3d',pts=[],dirty=1,yaw=.6,pitch=.45,Rc=I(),Rb=I(),phi=20,dpr=1;
 function fillSel(){const s=$('st');s.innerHTML='';for(const k in ST[mode])s.add(new Option(ST[mode][k].n,k));}
-function fillTg(){const o=[['sphere','Kugel'],['crystal','Kristall']];if(mode=='3d')o.push(['view','Ansicht']);
+function fillTg(){const o=[['sphere','Sphere'],['crystal','Crystal']];if(mode=='3d')o.push(['view','View']);
  $('tg').innerHTML=o.map((x,i)=>`<label><input type="radio" name="tgt" value="${x[0]}" ${i==0?'checked':''}><span>${x[1]}</span></label>`).join('');}
 const tgt=()=>document.querySelector('input[name=tgt]:checked').value;
 function build(){const k=1/+$('lam').value,s=ST[mode][$('st').value],B=s.B,d3=mode=='3d',
@@ -96,7 +96,7 @@ function draw(){const w=cv.clientWidth,h=cv.clientHeight,cs=getComputedStyle(doc
  const lam=+$('lam').value,k=1/lam,tol=+$('tol').value,cx=w/2,cy=h/2,Hh=2*k+.7,s=Math.min(w,h)/2/Hh*.97,d3=mode=='3d',Rv=view();
  const P=p=>{if(!d3)return[cx+s*p[0],cy-s*p[1],0];const a=mv(Rv,p);return[cx+s*a[0],cy-s*a[2],a[1]];};
  const R=mul(Rz(phi*Math.PI/180),Rc),u=mv(Rb,[1,0,0]),C=u.map(x=>-k*x),O=P([0,0,0]),PC=P(C);
- // Kugel
+ // Sphere
  ctx.fillStyle=col('--sph');ctx.globalAlpha=.08;ctx.beginPath();ctx.arc(PC[0],PC[1],k*s,0,7);ctx.fill();ctx.globalAlpha=1;
  ctx.strokeStyle=col('--sph');ctx.lineWidth=2;ctx.beginPath();ctx.arc(PC[0],PC[1],k*s,0,7);ctx.stroke();
  if(d3){ctx.lineWidth=1;ctx.globalAlpha=.35;const poly=f=>{ctx.beginPath();for(let i=0;i<=48;i++){const t=i/48*6.2832,p=f(t),q=P([C[0]+k*p[0],C[1]+k*p[1],C[2]+k*p[2]]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);}ctx.stroke();};
@@ -133,7 +133,7 @@ function draw(){const w=cv.clientWidth,h=cv.clientHeight,cs=getComputedStyle(doc
  if($('cel').checked)drawCell(w,h,R,Rv,d3,col);
  // Liste
  const rows=hits.map(o=>{const kp=[0,1,2].map(i=>o.G[i]+k*u[i]),c=(u[0]*kp[0]+u[1]*kp[1]+u[2]*kp[2])/k,tt=Math.acos(Math.max(-1,Math.min(1,c)))*180/Math.PI;return{t:tt,s:('('+o.p.h.slice(0,d3?3:2).join(' ')+')').padEnd(11)+(' '+tt.toFixed(1)+'°').padEnd(9)+(1/o.p.n).toFixed(3)};}).sort((a,b)=>a.t-b.t);
- $('nh').textContent=hits.length;$('ref').textContent=rows.map(r=>r.s).join('\n')||'– kein Reflex erfüllt –';
+ $('nh').textContent=hits.length;$('ref').textContent=rows.map(r=>r.s).join('\n')||'– no reflection –';
  $('lv').textContent=lam.toFixed(2);$('kv').textContent=k.toFixed(2);$('tv').textContent=tol.toFixed(3);$('pv').textContent=phi.toFixed(1);$('azv').textContent=(+$('az').value).toFixed(1);$('elv').textContent=(+$('el').value).toFixed(1);}
 function drawCell(w,h,R,Rv,d3,col){
  const k=$('st').value,q=Math.sqrt(3),ac=['#e67e22','#16a085','#d6336c'];let V,E=[],X=[],O,AX;
@@ -148,7 +148,7 @@ function drawCell(w,h,R,Rv,d3,col){
  const m=Math.min(w,h)*.3,x0=w-m-6,y0=h-m-6,cx=x0+m/2,cy=y0+m/2+8,sc=m*.36/mR;
  const tr=p=>{const a=d3?mv(Rv,mv(R,sh(p))):mv(R,sh(p));return d3?[cx+sc*a[0],cy-sc*a[2],a[1]]:[cx+sc*a[0],cy-sc*a[1],0];};
  ctx.globalAlpha=.93;ctx.fillStyle=col('--card');ctx.fillRect(x0,y0,m,m);ctx.globalAlpha=1;ctx.strokeStyle=col('--bd');ctx.lineWidth=1;ctx.strokeRect(x0,y0,m,m);
- ctx.fillStyle=col('--mut');ctx.font='10px system-ui';ctx.fillText('Elementarzelle: '+ST[mode][k].n.split(' (')[0],x0+6,y0+13);
+ ctx.fillStyle=col('--mut');ctx.font='10px system-ui';ctx.fillText('Unit cell: '+ST[mode][k].n.split(' (')[0],x0+6,y0+13);
  
  
  ctx.strokeStyle=col('--mut');ctx.lineWidth=1.2;ctx.globalAlpha=.8;
