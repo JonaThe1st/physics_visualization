@@ -16,7 +16,7 @@
   {
     "slug": "precessional-switching",
     "title": "Precessional Switching (LLG)",
-    "desc": "Thin-film macrospin: tune the field and in-plane anisotropy and drive the Landau-Lifshitz-Gilbert equation. Watch M precess around the effective field and flip with a field pulse (half a precession period), see the energy-conserving orbit and the h_K/2 switching threshold. Interactive 3D sphere.",
+    "desc": "Thin-film macrospin: drive the Landau-Lifshitz-Gilbert equation with a field along y (perpendicular to the initial M ∥ x) and in-plane anisotropy (easy axis x). Watch M precess around the effective field, follow the energy-conserving α=0 orbit, and see the h_K/2 switching threshold. Interactive 3D sphere.",
     "tags": ["magnetism", "LLG", "precessional switching", "FMR"],
     "on": true
   },

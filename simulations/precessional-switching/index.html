@@ -30,17 +30,15 @@ button{padding:5px 10px;border:1px solid var(--bd);background:var(--bg);color:va
 .legend i{display:inline-block;width:10px;height:3px;vertical-align:middle;margin-right:4px}
 </style></head><body>
 <h1>Precessional Switching interactive (LLG)</h1>
-<div class="sub">Soft ferromagnet (thin film, plane x–y), initial M ∥ x̂. Field in the yz-plane at polar angle φ from ŷ to ±ẑ; the in-plane anisotropy (easy axis) stays fixed along ŷ and does not follow the field. Undamped (α=0) precession about the effective field → full energy-conserving orbit on the sphere. h = H₀/M<sub>s</sub>, h<sub>K</sub> = H<sub>K</sub>/M<sub>s</sub>. Reduced time τ = γM<sub>s</sub>t. Drag to rotate.</div>
+<div class="sub">Soft ferromagnet (thin film, plane x–y), initial M ∥ x̂. Field along ŷ (in the film plane, perpendicular to the initial M); the in-plane anisotropy (easy axis) is fixed along x̂. Undamped (α=0) precession about the effective field → full energy-conserving orbit on the sphere. h = H₀/M<sub>s</sub>, h<sub>K</sub> = H<sub>K</sub>/M<sub>s</sub>. Reduced time τ = γM<sub>s</sub>t. Drag to rotate.</div>
 <div class="wrap">
  <div class="cvbox"><canvas id="cv"></canvas></div>
  <div class="panel">
   <div class="card">
    <label>Field strength (reduced) h = H₀/M<sub>s</sub> = <b id="hv"></b></label>
-   <input id="h" autocomplete="off" type="range" min="0.1" max="1.5" step="0.01" value="1.0">
-   <label>Field angle in the yz-plane φ (ŷ → ẑ) = <b id="pv"></b>°</label>
-   <input id="ph" autocomplete="off" type="range" min="-90" max="90" step="1" value="0">
-   <label>In-plane anisotropy h<sub>K</sub> = H<sub>K</sub>/M<sub>s</sub> (easy axis ŷ) = <b id="kv"></b></label>
-   <input id="hk" autocomplete="off" type="range" min="0" max="2" step="0.01" value="0">
+   <input id="h" autocomplete="off" type="range" min="0.05" max="1.5" step="0.01" value="1.0">
+   <label>In-plane anisotropy h<sub>K</sub> = H<sub>K</sub>/M<sub>s</sub> (easy axis x̂) = <b id="kv"></b></label>
+   <input id="hk" autocomplete="off" type="range" min="0" max="3" step="0.01" value="0">
    <label>Damping (Gilbert) α = <b id="av"></b> &nbsp;· 10⁻² &nbsp;(0: energy-conserving orbit)</label>
    <input id="al" autocomplete="off" type="range" min="0" max="10" step="0.1" value="0">
   </div>
@@ -56,7 +54,7 @@ button{padding:5px 10px;border:1px solid var(--bd);background:var(--bg);color:va
    <div class="legend">
     <span><i style="background:var(--kp)"></i>Magnetization m</span>
     <span><i style="background:var(--k0)"></i>Field H</span>
-    <span><i style="background:#e67e22"></i>easy axis y</span>
+    <span><i style="background:#e67e22"></i>easy axis x</span>
     <span><i style="background:var(--gv)"></i>Energy orbit (α=0)</span>
     <span><i style="background:#d6336c"></i>Trail (m over time)</span>
    </div>
@@ -72,33 +70,34 @@ mv=(A,v)=>A.map(r=>r[0]*v[0]+r[1]*v[1]+r[2]*v[2]),
 Rx=t=>{const c=Math.cos(t),s=Math.sin(t);return[[1,0,0],[0,c,-s],[0,s,c]]},
 Rz=t=>{const c=Math.cos(t),s=Math.sin(t);return[[c,-s,0],[s,c,0],[0,0,1]]};
 // ---- Physics: reduced LLG (LL form), optional damping. h_eff reduced by Ms.
-// Field lies in the yz-plane at polar angle ph from y toward z. Aniso easy axis y, dipolar out-of-plane -mz.
+// Field lies in the xy-plane at angle ph from y toward x: H = h (sin ph, cos ph, 0).
+// Easy axis x: e = -h m.Hhat + 1/2 mz^2 + hK/2 (my^2+mz^2)  (out-of-plane demag coefficient 1).
 function heff(m,h,hK,ph){const c=Math.cos(ph),s=Math.sin(ph);
-  return [0, h*c + hK*m[1], h*s - m[2]];}
+  return [h*s, h*c - hK*m[1], -(1+hK)*m[2]];}
 function dmd(m,h,hK,ph,alpha){const H=heff(m,h,hK,ph);
   const pre=cross(m,H),dd=cross(m,pre);
-  return [-pre[0]-alpha*dd[0],-pre[1]-alpha*dd[1],-pre[2]-alpha*dd[2]];}
+  const g=1/(1+alpha*alpha);return [-g*(pre[0]+alpha*dd[0]),-g*(pre[1]+alpha*dd[1]),-g*(pre[2]+alpha*dd[2])];}
 function step(m,h,hK,ph,alpha,dt){
   const k1=dmd(m,h,hK,ph,alpha),m2=m.map((x,i)=>x+.5*dt*k1[i]),k2=dmd(m2,h,hK,ph,alpha);
   const m3=m.map((x,i)=>x+.5*dt*k2[i]),k3=dmd(m3,h,hK,ph,alpha);
   const m4=m.map((x,i)=>x+dt*k3[i]),k4=dmd(m4,h,hK,ph,alpha);
   const out=m.map((x,i)=>x+dt/6*(k1[i]+2*k2[i]+2*k3[i]+k4[i]));const n=norm(out)||1;return out.map(x=>x/n);}
 function energy(m,h,hK,ph){const c=Math.cos(ph),s=Math.sin(ph);
-  return -h*(m[1]*c+m[2]*s)+0.5*m[2]*m[2]-0.5*hK*m[1]*m[1];}
+  return -h*(m[0]*s+m[1]*c)+0.5*m[2]*m[2]+0.5*hK*(m[1]*m[1]+m[2]*m[2]);}
 // Energy-conserving closed orbit (alpha=0), precomputed from m0=[1,0,0].
 let orbit=[],orbitMinMx=1;
 function buildOrbit(h,hK,ph){const dt=0.004;let m=[1,0,0];const pts=[[1,0,0]];let mn=1;
   const He=heff([1,0,0],h,hK,ph),hn=Math.hypot(He[0],He[1],He[2])||1e-9;
   const perI=Math.max(80,Math.round(TAU/hn/dt));          // one precession period in steps
-  const base=Math.round(perI*0.6),maxSteps=perI*25;       // collect the full closed loop from t=0
+  const base=Math.round(perI*0.6),maxSteps=perI*25,stride=Math.max(1,Math.round(perI/1500)); // keep ~1500 points per period       // collect the full closed loop from t=0
   for(let i=0;i<maxSteps;i++){m=step(m,h,hK,ph,0,dt);if(m[0]<mn)mn=m[0];
-    pts.push(m.slice());
-    if(i>base&&m[0]>0.9995&&Math.abs(m[1])<0.05&&Math.abs(m[2])<0.05)break;} // closed again
+    if(i%stride===0)pts.push(m.slice());
+    if(i>base&&m[0]>0.9995&&Math.abs(m[1])<0.05&&Math.abs(m[2])<0.05){pts.push(m.slice());break;}} // closed again
   orbitMinMx=mn;return pts;}
 
 // ---- State ----
 let playing=true, t=0, m=[1,0,0], trail=[], dirty=1, yaw=.6, pitch=.45, dpr=1;
-const param=()=>({h:+$('h').value,hk:+$('hk').value,ph:+$('ph').value*Math.PI/180,alpha:(+$('al').value)/100});
+const param=()=>({h:+$('h').value,hk:+$('hk').value,ph:0,alpha:(+$('al').value)/100});
 function orbitLen(){const p=param();return buildOrbit(p.h,p.hk,p.ph);}
 function reset(){m=[1,0,0];t=0;trail=[];orbit=orbitLen();yaw=.6;pitch=.45;dirty=1;}
 function view(){return mul(Rx(pitch),Rz(yaw));}
@@ -127,22 +126,22 @@ function draw(){const w=cv.clientWidth,hh=cv.clientHeight,cs=getComputedStyle(do
  // field vector
  {const f=appliedFieldVec();const a=P(f.map(x=>x*-1)),b=P(f.map(x=>x*1.25));arrow(a,b,col('--k0'),2.2);
    ctx.fillStyle=col('--k0');ctx.font='bold 14px system-ui';ctx.fillText('H',b[0]+6,b[1]-6);}
- // easy axis dashed (along y, fixed)
- const ex=P(mul(Rv,[0,1.25,0])),e0=P(mul(Rv,[0,-1.25,0]));ctx.strokeStyle='#e67e22';ctx.setLineDash([6,5]);ctx.lineWidth=1.4;
+ // easy axis dashed (along x, fixed)
+ const ex=P([1.25,0,0]),e0=P([-1.25,0,0]);ctx.strokeStyle='#e67e22';ctx.setLineDash([6,5]);ctx.lineWidth=1.4;
  ctx.beginPath();ctx.moveTo(e0[0],e0[1]);ctx.lineTo(ex[0],ex[1]);ctx.stroke();ctx.setLineDash([]);
  // magnetization vector m
  const mt=P(m.map(x=>x*1.1));arrow(P([0,0,0]),mt,col('--kp'),3);ctx.fillStyle=col('--kp');
  ctx.font='bold 15px system-ui';ctx.fillText('m',mt[0]+7,mt[1]-7);
  // readouts
  const p=param(),e=energy(m,p.h,p.hk,p.ph);
- $('hv').textContent=p.h.toFixed(2);$('pv').textContent=(Math.round(+$('ph').value));$('kv').textContent=p.hk.toFixed(2);
- $('av').textContent=p.alpha.toFixed(2);
+ $('hv').textContent=p.h.toFixed(2);$('kv').textContent=p.hk.toFixed(2);
+ $('av').textContent=(p.alpha*100).toFixed(1);
  $('ro').innerHTML=
   'm = ('+m[0].toFixed(3)+', '+m[1].toFixed(3)+', '+m[2].toFixed(3)+') &nbsp; |m|='+norm(m).toFixed(4)+'<br>'+
   'e/μ₀M<sub>s</sub>² = '+e.toFixed(4)+' &nbsp;(Start '+energy([1,0,0],p.h,p.hk,p.ph).toFixed(4)+')<br>'+
   'Orbit min m<sub>x</sub> = '+orbitMinMx.toFixed(3)+' &nbsp; τ = '+t.toFixed(2);
  }
-function appliedFieldVec(){const p=param(),c=Math.cos(p.ph),s=Math.sin(p.ph);return [0,p.h*c,p.h*s];}
+function appliedFieldVec(){const p=param(),c=Math.cos(p.ph),s=Math.sin(p.ph);return [p.h*s,p.h*c,0];}
 function arrow(a,b,c,w,dash){ctx.strokeStyle=c;ctx.fillStyle=c;ctx.lineWidth=w;ctx.setLineDash(dash||[]);
  ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.setLineDash([]);
  const tt=Math.atan2(b[1]-a[1],b[0]-a[0]);ctx.beginPath();ctx.moveTo(b[0],b[1]);
@@ -155,7 +154,7 @@ cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY};cv.setPoint
 cv.addEventListener('pointerup',()=>{drag=null;cv.style.cursor='grab';});
 cv.addEventListener('pointermove',e=>{if(!drag)return;yaw+=(e.clientX-drag.x)*.01;pitch=Math.max(-1.5,Math.min(1.5,pitch+(e.clientY-drag.y)*.01));drag={x:e.clientX,y:e.clientY};dirty=1;});
 function paramDot(){orbit=orbitLen();m=[1,0,0];t=0;trail=[];dirty=1;}
-['h','ph','hk'].forEach(i=>$(i).oninput=()=>{dirty=1;paramDot();});
+['h','hk'].forEach(i=>$(i).oninput=()=>{dirty=1;paramDot();});
 ['al'].forEach(i=>$(i).oninput=()=>{dirty=1;if(+$('al').value==0){trail=[];$('trl').checked=true;}});
 $('orb').onchange=()=>dirty=1;$('trl').onchange=()=>dirty=1;
 $('rst').onclick=reset;
