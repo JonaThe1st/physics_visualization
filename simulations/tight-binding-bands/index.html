@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tight-binding band structures</title>
+<style>
+:root{--paper:#E9EEF2;--panel:#F6F8FA;--ink:#172233;--muted:#55657A;--rule:#B4C0CB;--vb:#0B7285;--cb:#C2255C;--plot:#FBFCFD;--grid:#DDE5EC;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--paper:#0E1621;--panel:#141E2B;--ink:#E5ECF3;--muted:#95A5B8;--rule:#2F4054;--vb:#4FCBE0;--cb:#FF6E9C;--plot:#101A27;--grid:#1B2A3B}}
+*{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";font-size:16px;line-height:1.45;font-variant-numeric:lining-nums tabular-nums}
+.top{padding:20px 24px 4px 64px;max-width:1700px;margin:0 auto}.top h1{margin:0;font-size:clamp(26px,3.4vw,36px);font-weight:600;letter-spacing:-.01em}.top p{margin:8px 0 0;max-width:80ch;color:var(--muted)}
+.app{display:grid;grid-template-columns:300px minmax(0,1fr) 380px;gap:24px;padding:16px 24px 32px;max-width:1700px;margin:0 auto;align-items:start}
+@media(max-width:1180px){.app{grid-template-columns:minmax(0,1fr) 360px}.controls{grid-column:1/-1;order:3}}
+@media(max-width:760px){.app{grid-template-columns:minmax(0,1fr);padding:12px 14px}.top{padding:16px 14px 0 64px}}
+h2{font-size:17px;font-weight:600;margin:0 0 8px;padding-bottom:4px;border-bottom:1px solid var(--rule)}
+.grp{margin:0 0 20px}.row{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;font-size:15px}
+select,input[type=number]{width:100%;font:inherit;font-size:14px;padding:5px 7px;color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:4px}
+.pg{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}.pg label{font-size:13px;color:var(--muted)}
+.seg label{display:flex;gap:8px;align-items:center;font-size:15px;margin-top:6px}input[type=radio],input[type=range]{accent-color:var(--vb)}input[type=range]{width:100%}
+button{font:inherit;font-size:14px;padding:5px 12px;cursor:pointer;color:var(--ink);background:transparent;border:1px solid var(--ink);border-radius:4px}button:hover{background:var(--ink);color:var(--paper)}
+:focus-visible{outline:2px solid var(--vb);outline-offset:2px}
+.box{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:8px;margin-bottom:16px}
+canvas{display:block;width:100%;border-radius:4px;background:var(--plot);border:1px solid var(--rule)}
+#cBand{aspect-ratio:16/9}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:760px){.two{grid-template-columns:1fr}}
+#cMap,#c3{aspect-ratio:1/1}#c3{cursor:grab;touch-action:none}
+.cap{font-size:14px;color:var(--muted);margin:4px 2px 0;display:flex;justify-content:space-between;gap:8px;align-items:center}
+dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:15px}dt{color:var(--muted)}dd{margin:0;font-weight:600;text-align:right}
+details{border-top:1px solid var(--rule);padding-top:8px;font-size:14px}summary{cursor:pointer;font-weight:600;font-size:15px}
+pre{white-space:pre-wrap;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0;background:var(--plot);border:1px solid var(--grid);border-radius:4px;padding:8px}
+.pinfo{font-size:13px;color:var(--muted);margin:10px 0 0;line-height:1.5}
+math{font-family:"Latin Modern Math","STIX Two Math","Cambria Math","Noto Sans Math",math;font-size:1.08em}
+.eq{overflow-x:auto;margin:6px 0;padding:2px 0}
+#doc p{margin:8px 0;font-size:14px;color:var(--muted)}
+.src{margin:6px 0 0;padding-left:18px}.src li{margin:3px 0}.hint{font-size:14px;color:var(--muted);margin:6px 0 0}
+</style>
+</head>
+<body>
+<div class="top"><h1>Tight-binding band structures</h1>
+<p>Pick a structure, edit on-site and hopping energies, and read off the bands along high-symmetry lines, as a k-plane map and as a 3D surface. Band gaps are extracted from the plotted path.</p></div>
+<div class="app">
+<section class="controls">
+ <div class="grp"><h2>Structure</h2>
+  <select id="model" aria-label="Structure"></select>
+  <p class="hint" id="note"></p></div>
+ <div class="grp"><h2>Parameters (eV, Å)</h2><div class="pg" id="params"></div><div class="pinfo" id="pinfo"></div></div>
+ <div class="grp"><h2>k-plane view</h2>
+  <div class="seg"><label><input type="radio" name="mb" value="c" checked> Lowest conduction band</label><label><input type="radio" name="mb" value="v"> Highest valence band</label></div>
+  <div id="kzrow" hidden><div class="row"><span>Slice k<sub>z</sub></span><output id="kzo">0.00 · 2π/a</output></div><input type="range" id="kz" min="-1" max="1" step="0.05" value="0"></div></div>
+</section>
+<section class="stage">
+ <div class="box"><canvas id="cBand"></canvas><div class="cap"><span id="pathcap"></span><span>Blue: valence bands · pink: conduction bands</span></div></div>
+ <div class="two">
+  <div class="box"><canvas id="cMap"></canvas><div class="cap"><span id="mapcap"></span></div></div>
+  <div class="box"><canvas id="c3"></canvas><div class="cap"><span>Drag to rotate (energy axis up)</span><button id="reset">Reset view</button></div></div>
+ </div>
+</section>
+<section class="side">
+ <div class="grp"><h2>Extracted quantities</h2><dl id="res"></dl></div>
+ <div class="grp"><h2>Model and formulas</h2><div id="doc"></div>
+ <details open><summary>Sources</summary><ul class="src">
+  <li>Slater &amp; Koster, Phys. Rev. 94, 1498 (1954): two-center tight-binding method.</li>
+  <li>Wallace, Phys. Rev. 71, 622 (1947); Castro Neto et al., Rev. Mod. Phys. 81, 109 (2009): honeycomb π bands, t′ term.</li>
+  <li>Semenoff, Phys. Rev. Lett. 53, 2449 (1984): staggered on-site energy opens the Dirac gap (hBN).</li>
+  <li>Liu, Shan, Yao, Yao, Xiao, Phys. Rev. B 88, 085433 (2013), arXiv:1305.6089: three-band MX<sub>2</sub> model, Eqs. (4)–(11), (13)–(22), parameters from Tables II and III (GGA).</li>
+  <li>Vogl, Hjalmarson, Dow, J. Phys. Chem. Solids 44, 365 (1983): sp<sup>3</sup>s* model and parameters.</li></ul></details></div>
+</section>
+</div>
+<script>
+"use strict";
+const PI=Math.PI,SQ3=Math.sqrt(3),cs=Math.cos,sn=Math.sin;
+const $=id=>document.getElementById(id);
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* ---------- Jacobi eigenvalues of a real symmetric matrix ---------- */
+function jacobi(M,N){
+ for(let sw=0;sw<40;sw++){
+  let off=0;for(let i=0;i<N;i++)for(let j=i+1;j<N;j++)off+=M[i*N+j]*M[i*N+j];
+  if(off<1e-22)break;
+  for(let p=0;p<N-1;p++)for(let q=p+1;q<N;q++){
+   const apq=M[p*N+q];if(Math.abs(apq)<1e-30)continue;
+   const th=(M[q*N+q]-M[p*N+p])/(2*apq),t=(th>=0?1:-1)/(Math.abs(th)+Math.sqrt(th*th+1)),c=1/Math.sqrt(t*t+1),s=t*c;
+   for(let k=0;k<N;k++){const a=M[k*N+p],b=M[k*N+q];M[k*N+p]=c*a-s*b;M[k*N+q]=s*a+c*b}
+   for(let k=0;k<N;k++){const a=M[p*N+k],b=M[q*N+k];M[p*N+k]=c*a-s*b;M[q*N+k]=s*a+c*b}
+  }}
+}
+/* ---------- models: H(k) fills Hermitian matrix A+iB (row-major n x n) ---------- */
+function hexH(k,p,a,A,B){
+ const kx=k[0],ky=k[1],D=[[a/2,a/(2*SQ3)],[-a/2,a/(2*SQ3)],[0,-a/SQ3]];let fr=0,fi=0;
+ for(const d of D){const x=kx*d[0]+ky*d[1];fr+=cs(x);fi+=sn(x)}
+ const g=2*(cs(kx*a)+cs(kx*a/2+ky*a*SQ3/2)+cs(-kx*a/2+ky*a*SQ3/2));
+ A[0]=p.eA-p.t2*g;A[3]=p.eB-p.t2*g;A[1]=A[2]=-p.t*fr;B[1]=-p.t*fi;B[2]=p.t*fi;
+}
+function mosH(k,p,a,A,B){
+ const al=k[0]*a/2,be=SQ3*k[1]*a/2,c=cs,s=sn,{e1,e2,t0,t1,t2,t11,t12,t22,r0,r1,r2,r11,r12,u0,u1,u2,u11,u12,u22}=p;
+ const V0=e1+2*t0*(2*c(al)*c(be)+c(2*al))+2*r0*(2*c(3*al)*c(be)+c(2*be))+2*u0*(2*c(2*al)*c(2*be)+c(4*al));
+ const V1r=-2*SQ3*t2*s(al)*s(be)+2*(r1+r2)*s(3*al)*s(be)-2*SQ3*u2*s(2*al)*s(2*be);
+ const V1i=2*t1*s(al)*(2*c(al)+c(be))+2*(r1-r2)*s(3*al)*c(be)+2*u1*s(2*al)*(2*c(2*al)+c(2*be));
+ const V2r=2*t2*(c(2*al)-c(al)*c(be))-2/SQ3*(r1+r2)*(c(3*al)*c(be)-c(2*be))+2*u2*(c(4*al)-c(2*al)*c(2*be));
+ const V2i=2*SQ3*t1*c(al)*s(be)+2/SQ3*s(be)*(r1-r2)*(c(3*al)+2*c(be))+2*SQ3*u1*c(2*al)*s(2*be);
+ const V11=e2+(t11+3*t22)*c(al)*c(be)+2*t11*c(2*al)+4*r11*c(3*al)*c(be)+2*(r11+SQ3*r12)*c(2*be)+(u11+3*u22)*c(2*al)*c(2*be)+2*u11*c(4*al);
+ const V12r=SQ3*(t22-t11)*s(al)*s(be)+4*r12*s(3*al)*s(be)+SQ3*(u22-u11)*s(2*al)*s(2*be);
+ const V12i=4*t12*s(al)*(c(al)-c(be))+4*u12*s(2*al)*(c(2*al)-c(2*be));
+ const V22=e2+(3*t11+t22)*c(al)*c(be)+2*t22*c(2*al)+2*r11*(2*c(3*al)*c(be)+c(2*be))+2/SQ3*r12*(4*c(3*al)*c(be)-c(2*be))+(3*u11+u22)*c(2*al)*c(2*be)+2*u22*c(4*al);
+ A[0]=V0;A[4]=V11;A[8]=V22;
+ A[1]=V1r;B[1]=V1i;A[3]=V1r;B[3]=-V1i;A[2]=V2r;B[2]=V2i;A[6]=V2r;B[6]=-V2i;A[5]=V12r;B[5]=V12i;A[7]=V12r;B[7]=-V12i;
+}
+const SGN=[[1,1,-1,-1],[1,-1,1,-1],[1,-1,-1,1]],DEL=[[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]];
+function zbH(k,p,a,A,B){
+ const gr=[0,0,0,0],gi=[0,0,0,0];
+ for(let d=0;d<4;d++){const ph=a/4*(k[0]*DEL[d][0]+k[1]*DEL[d][1]+k[2]*DEL[d][2]),c=cs(ph)/4,s=sn(ph)/4;
+  gr[0]+=c;gi[0]+=s;for(let j=0;j<3;j++){gr[j+1]+=SGN[j][d]*c;gi[j+1]+=SGN[j][d]*s}}
+ const N=10,set=(i,j,re,im)=>{A[i*N+(5+j)]=re;B[i*N+(5+j)]=im;A[(5+j)*N+i]=re;B[(5+j)*N+i]=-im};
+ const d=[p.Esa,p.Epa,p.Epa,p.Epa,p.Ssa,p.Esc,p.Epc,p.Epc,p.Epc,p.Ssc];for(let i=0;i<N;i++)A[i*N+i]=d[i];
+ set(0,0,p.Vss*gr[0],p.Vss*gi[0]);
+ for(let j=1;j<4;j++){set(0,j,p.Vsapc*gr[j],p.Vsapc*gi[j]);set(j,0,-p.Vpasc*gr[j],-p.Vpasc*gi[j]);
+  set(4,j,p.Vssapc*gr[j],p.Vssapc*gi[j]);set(j,4,-p.Vpassc*gr[j],-p.Vpassc*gi[j]);
+  for(let i=1;i<4;i++){const v=i===j?p.Vxx:p.Vxy,g=i===j?0:6-i-j;set(i,j,v*gr[g],v*gi[g])}}
+}
+const SI={a:5.431,Esa:-4.2,Epa:1.715,Ssa:6.685,Esc:-4.2,Epc:1.715,Ssc:6.685,Vss:-8.3,Vxx:1.715,Vxy:4.575,Vsapc:5.7292,Vpasc:5.7292,Vssapc:5.3749,Vpassc:5.3749};
+const GAAS={a:5.653,Esa:-8.3431,Epa:1.0414,Ssa:8.5914,Esc:-2.6569,Epc:3.6686,Ssc:6.7386,Vss:-6.4513,Vxx:1.9546,Vxy:5.0779,Vsapc:4.48,Vpasc:5.7839,Vssapc:4.8422,Vpassc:4.8077};
+const MOS=(o)=>Object.assign({e1:0,e2:0,t0:0,t1:0,t2:0,t11:0,t12:0,t22:0,r0:0,r1:0,r2:0,r11:0,r12:0,u0:0,u1:0,u2:0,u11:0,u12:0,u22:0},o);
+const MOS_NN={a:3.19,e1:1.046,e2:2.104,t0:-.184,t1:.401,t2:.507,t11:.218,t12:.338,t22:.057};
+const MOS_TNN={a:3.19,e1:.683,e2:1.707,t0:-.146,t1:-.114,t2:.506,t11:.085,t12:.162,t22:.073,r0:.06,r1:-.236,r2:.067,r11:.016,r12:.087,u0:-.038,u1:.046,u2:.001,u11:.266,u12:-.176,u22:-.15};
+const WSE_TNN={a:3.325,e1:.728,e2:1.655,t0:-.146,t1:-.124,t2:.507,t11:.117,t12:.127,t22:.015,r0:.036,r1:-.234,r2:.107,r11:.044,r12:.075,u0:-.061,u1:.032,u2:.007,u11:.329,u12:-.202,u22:-.164};
+const P2=PI;
+const MODELS={
+ hex:{name:"2D honeycomb: graphene, hBN",n:2,nv:1,dim:2,H:hexH,
+  keys:[["eA","ε_A"],["eB","ε_B"],["t","t (NN)"],["t2","t′ (NNN)"]],
+  presets:{"Graphene":{a:2.46,eA:0,eB:0,t:2.7,t2:0},"Graphene with t′ = 0.1 eV":{a:2.46,eA:0,eB:0,t:2.7,t2:.1},"hBN (illustrative values)":{a:2.5,eA:2.9,eB:-2.9,t:2.5,t2:0}},
+  note:"p_z orbitals, A and B sublattice. hBN values are illustrative, chosen for a gap near 6 eV; edit freely.",
+  path:a=>[["Γ",[0,0,0]],["K",[4*PI/(3*a),0,0]],["M",[PI/a,PI/(SQ3*a),0]],["Γ",[0,0,0]]]},
+ mos:{name:"2D dichalcogenides: MoS₂, WSe₂",n:3,nv:1,dim:2,H:mosH,
+  keys:"e1 e2 t0 t1 t2 t11 t12 t22 r0 r1 r2 r11 r12 u0 u1 u2 u11 u12 u22".split(" ").map(k=>[k,k.replace(/^e(\d)/,"ε$1")]),
+  presets:{"MoS₂ NN, GGA (Table II)":MOS(MOS_NN),"MoS₂ up to 3rd NN, GGA (Table III)":MOS_TNN,"WSe₂ up to 3rd NN, GGA (Table III)":WSE_TNN},
+  note:"Basis d_z², d_xy, d_x²−y². r and u are 2nd and 3rd neighbour hoppings; set them to 0 for the NN model. Spin-orbit coupling is not included.",
+  path:a=>[["Γ",[0,0,0]],["K",[4*PI/(3*a),0,0]],["M",[PI/a,PI/(SQ3*a),0]],["Γ",[0,0,0]]]},
+ zb:{name:"3D diamond / zincblende: Si, GaAs",n:10,nv:4,dim:3,H:zbH,
+  keys:[["Esa","E(s,a)"],["Epa","E(p,a)"],["Ssa","E(s*,a)"],["Esc","E(s,c)"],["Epc","E(p,c)"],["Ssc","E(s*,c)"],["Vss","V(s,s)"],["Vxx","V(x,x)"],["Vxy","V(x,y)"],["Vsapc","V(sa,pc)"],["Vpasc","V(pa,sc)"],["Vssapc","V(s*a,pc)"],["Vpassc","V(pa,s*c)"]],
+  presets:{"Si (diamond): anion = cation":SI,"GaAs (zincblende)":GAAS},
+  note:"a = anion, c = cation. Equal anion and cation parameters give diamond (Si, Ge, C). III–V and II–VI compounds: enter the Vogl et al. set of your material. No spin-orbit coupling.",
+  path:a=>{const f=2*PI/a;return [["L",[f/2,f/2,f/2]],["Γ",[0,0,0]],["X",[f,0,0]],["W",[f,f/2,0]],["K",[.75*f,.75*f,0]],["Γ",[0,0,0]]]}}
+};
+/* ---------- state ---------- */
+let mid="hex",m=MODELS[mid],P={},a=2.46,bandsOf=null;
+let path=null,grid=null,view={yaw:-.6,pitch:1.0};
+const inputs={};
+const bufs={};
+function bands(k){
+ const N=m.n,S=2*N;let A=bufs.A,B=bufs.B,R=bufs.R;A.fill(0);B.fill(0);m.H(k,P,a,A,B);
+ for(let i=0;i<N;i++)for(let j=0;j<N;j++){const x=A[i*N+j],y=B[i*N+j];R[i*S+j]=x;R[i*S+N+j]=-y;R[(N+i)*S+j]=y;R[(N+i)*S+N+j]=x}
+ jacobi(R,S);const d=[];for(let i=0;i<S;i++)d.push(R[i*S+i]);d.sort((u,v)=>u-v);const o=[];for(let i=0;i<S;i+=2)o.push(d[i]);return o;
+}
+/* ---------- compute ---------- */
+function calcPath(){
+ const V=m.path(a),seg=[];let L=0;
+ for(let i=1;i<V.length;i++){const d=Math.hypot(V[i][1][0]-V[i-1][1][0],V[i][1][1]-V[i-1][1][1],V[i][1][2]-V[i-1][1][2]);seg.push(d);L+=d}
+ const X=[],E=[],vx=[0],NP=m.dim===3?200:240;let off=0;
+ for(let i=0;i<seg.length;i++){const n=Math.max(10,Math.round(NP*seg[i]/L));
+  for(let j=i?1:0;j<=n;j++){const t=j/n,k=[0,1,2].map(q=>V[i][1][q]+t*(V[i+1][1][q]-V[i][1][q]));X.push(off+t*seg[i]);E.push(bands(k))}
+  off+=seg[i];vx.push(off)}
+ path={V,X,E,vx,L};
+}
+function gridDomain(){return m.dim===3?2*PI/a*1.05:4*PI/(3*a)*1.1}
+function calcGrid(){
+ const R=m.dim===3?34:64,h=gridDomain(),kz=m.dim===3?parseFloat($("kz").value)*2*PI/a:0,vb=new Float32Array(R*R),cb=new Float32Array(R*R);
+ for(let i=0;i<R;i++)for(let j=0;j<R;j++){const e=bands([-h+2*h*i/(R-1),-h+2*h*j/(R-1),kz]);vb[i*R+j]=e[m.nv-1];cb[i*R+j]=e[m.nv]}
+ grid={R,h,vb,cb,kz};
+}
+function loc(x){
+ const {V,vx,L}=path;for(let i=0;i<vx.length;i++)if(Math.abs(x-vx[i])<.03*L)return V[i][0];
+ for(let i=0;i<vx.length-1;i++)if(x<=vx[i+1])return V[i][0]+"–"+V[i+1][0];return "";
+}
+function readouts(){
+ const {X,E}=path,nv=m.nv;let iv=0,ic=0,dmin=1e9,id=0,lo=1e9;
+ for(let i=0;i<X.length;i++){if(E[i][nv-1]>E[iv][nv-1])iv=i;if(E[i][nv]<E[ic][nv])ic=i;const d=E[i][nv]-E[i][nv-1];if(d<dmin){dmin=d;id=i}lo=Math.min(lo,E[i][0])}
+ const gap=E[ic][nv]-E[iv][nv-1],f=v=>v.toFixed(3)+" eV";let rows=[];
+ const kind=gap<1e-3?"metal / semimetal (gap closes)":Math.abs(X[iv]-X[ic])<.02*path.L||Math.abs(dmin-gap)<2e-3?"direct":"indirect";
+ rows.push(["Band gap",f(Math.max(gap,0))],["Gap type",kind],["VBM at",loc(X[iv])],["CBM at",loc(X[ic])],["Minimum direct gap",f(dmin)+" at "+loc(X[id])],["Top valence band energy",f(E[iv][nv-1])],["Occupied bandwidth",f(E[iv][nv-1]-lo)]);
+ /* closed-form checks */
+ if(mid==="hex"){let dev=0;const D=(P.eA-P.eB)/2,em=(P.eA+P.eB)/2;
+  for(let i=0;i<X.length;i+=3){const t=X[i],V=path.V;let s=0;while(s<V.length-2&&t>path.vx[s+1])s++;const u=(t-path.vx[s])/(path.vx[s+1]-path.vx[s]),k=[0,1].map(q=>V[s][1][q]+u*(V[s+1][1][q]-V[s][1][q]));
+   const g=2*(cs(k[0]*a)+cs(k[0]*a/2+k[1]*a*SQ3/2)+cs(-k[0]*a/2+k[1]*a*SQ3/2)),r=Math.sqrt(D*D+P.t*P.t*Math.max(0,3+g));
+   dev=Math.max(dev,Math.abs(E[i][0]-(em-P.t2*g-r)),Math.abs(E[i][1]-(em-P.t2*g+r)))}
+  rows.push(["Dirac gap 2|Δ| (analytic)",f(Math.abs(P.eA-P.eB))],["Closed form vs numeric",dev.toExponential(1)+" eV"])}
+ if(mid==="mos"){const z=["r0","r1","r2","r11","r12","u0","u1","u2","u11","u12","u22"].every(k=>!P[k]);
+  rows.push(["NN gap at K (Table I)",z?f(P.e1-3*P.t0-(P.e2-1.5*(P.t11+P.t22)-3*SQ3*P.t12)):"only for r = u = 0"])}
+ if(mid==="zb"){const e=bands([0,0,0]),av=(x,y)=>(x+y)/2,sp=(x,y,v)=>Math.sqrt(((x-y)/2)**2+v*v);
+  const an=[av(P.Epa,P.Epc)-sp(P.Epa,P.Epc,P.Vxx),av(P.Epa,P.Epc)+sp(P.Epa,P.Epc,P.Vxx),av(P.Esa,P.Esc)-sp(P.Esa,P.Esc,P.Vss),av(P.Esa,P.Esc)+sp(P.Esa,P.Esc,P.Vss)];
+  let dev=0;for(const v of an)dev=Math.max(dev,Math.min(...e.map(x=>Math.abs(x-v))));
+  rows.push(["Γ₁ᵛ, Γ₁ᶜ (analytic)",an[2].toFixed(2)+", "+an[3].toFixed(2)+" eV"],["Γ₁₅ᵛ, Γ₁₅ᶜ (analytic)",an[0].toFixed(2)+", "+an[1].toFixed(2)+" eV"],["Closed form vs numeric",dev.toExponential(1)+" eV"])}
+ $("res").innerHTML=rows.map(r=>"<dt>"+r[0]+"</dt><dd>"+r[1]+"</dd>").join("");
+ return {iv,ic,gap};
+}
+/* ---------- drawing ---------- */
+function fit(c){const r=c.getBoundingClientRect(),d=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.round(r.width*d)),h=Math.max(1,Math.round(r.height*d));if(c.width!==w||c.height!==h){c.width=w;c.height=h}const x=c.getContext("2d");x.setTransform(d,0,0,d,0,0);return [x,r.width,r.height]}
+const FONT=()=>getComputedStyle(document.body).fontFamily;
+function drawBands(ex){
+ const [x,W,H]=fit($("cBand")),{X,E,vx,V,L}=path,nv=m.nv,l=50,r=10,t=12,b=26,pw=W-l-r,ph=H-t-b;
+ x.clearRect(0,0,W,H);let lo=1e9,hi=-1e9;for(const e of E)for(const v of e){lo=Math.min(lo,v);hi=Math.max(hi,v)}
+ const pad=.05*(hi-lo)+.1;lo-=pad;hi+=pad;const px=u=>l+u/L*pw,py=v=>t+(hi-v)/(hi-lo)*ph;
+ x.font="12px "+FONT();x.fillStyle=css("--muted");x.strokeStyle=css("--grid");x.lineWidth=1;x.textAlign="right";x.textBaseline="middle";
+ const st=niceStep((hi-lo)/6);for(let v=Math.ceil(lo/st)*st;v<=hi;v+=st){x.beginPath();x.moveTo(l,py(v));x.lineTo(l+pw,py(v));x.stroke();x.fillText(v.toFixed(st<1?1:0),l-6,py(v))}
+ x.save();x.translate(12,t+ph/2);x.rotate(-PI/2);x.textAlign="center";x.fillText("Energy (eV)",0,0);x.restore();
+ if(ex.gap>1e-3){x.fillStyle=css("--grid");x.globalAlpha=.7;x.fillRect(l,py(E[ex.ic][nv]),pw,py(E[ex.iv][nv-1])-py(E[ex.ic][nv]));x.globalAlpha=1}
+ x.strokeStyle=css("--rule");x.textAlign="center";x.textBaseline="top";
+ for(let i=0;i<vx.length;i++){x.beginPath();x.moveTo(px(vx[i]),t);x.lineTo(px(vx[i]),t+ph);x.stroke();x.fillStyle=css("--ink");x.fillText(V[i][0],px(vx[i]),t+ph+6)}
+ x.lineWidth=1.6;for(let n=0;n<m.n;n++){x.strokeStyle=css(n<nv?"--vb":"--cb");x.beginPath();for(let i=0;i<X.length;i++){const X0=px(X[i]),Y0=py(E[i][n]);i?x.lineTo(X0,Y0):x.moveTo(X0,Y0)}x.stroke()}
+ x.fillStyle=css("--vb");x.beginPath();x.arc(px(X[ex.iv]),py(E[ex.iv][nv-1]),4,0,2*PI);x.fill();x.fillStyle=css("--cb");x.beginPath();x.arc(px(X[ex.ic]),py(E[ex.ic][nv]),4,0,2*PI);x.fill();
+ $("pathcap").textContent="Path "+V.map(v=>v[0]).join("–")+" · dots mark VBM and CBM";
+}
+function niceStep(s){const p=Math.pow(10,Math.floor(Math.log10(s))),f=s/p;return (f<1.5?1:f<3.5?2:f<7.5?5:10)*p}
+function bzOutline(){
+ if(m.dim===2){const K=4*PI/(3*a);return [0,1,2,3,4,5].map(i=>[K*cs(i*PI/3),K*sn(i*PI/3)])}
+ if(grid.kz!==0)return null;const q=PI/a;return [[2,1],[1,2],[-1,2],[-2,1],[-2,-1],[-1,-2],[1,-2],[2,-1]].map(p=>[p[0]*q,p[1]*q]);
+}
+function ramp(u){u=Math.min(1,Math.max(0,u));const A=[[18,52,86],[22,139,157],[247,220,111],[250,243,226]],s=u*3,i=Math.min(2,Math.floor(s)),f=s-i;return "rgb("+[0,1,2].map(c=>Math.round(A[i][c]+(A[i+1][c]-A[i][c])*f)).join(",")+")"}
+function drawMap(){
+ const [x,W,H]=fit($("cMap")),{R,h,vb,cb}=grid,Z=document.querySelector('input[name=mb]:checked').value==="c"?cb:vb;
+ x.clearRect(0,0,W,H);let lo=1e9,hi=-1e9;for(const v of Z){lo=Math.min(lo,v);hi=Math.max(hi,v)}
+ const S=Math.min(W,H)-8,ox=(W-S)/2,oy=(H-S)/2,c=S/R;
+ for(let i=0;i<R;i++)for(let j=0;j<R;j++){x.fillStyle=ramp((Z[i*R+j]-lo)/(hi-lo||1));x.fillRect(ox+i*c,oy+S-(j+1)*c,c+.6,c+.6)}
+ const P2D=(kx,ky)=>[ox+(kx+h)/(2*h)*S,oy+S-(ky+h)/(2*h)*S],O=bzOutline();
+ if(O){x.strokeStyle="#fff";x.lineWidth=1.5;x.beginPath();O.forEach((p,i)=>{const q=P2D(p[0],p[1]);i?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1])});x.closePath();x.stroke()}
+ x.fillStyle="#fff";x.font="12px "+FONT();x.textBaseline="top";x.fillText(lo.toFixed(2)+" to "+hi.toFixed(2)+" eV",ox+6,oy+5);
+ $("mapcap").textContent=(m.dim===3?"Slice k_z = "+(grid.kz*a/(2*PI)).toFixed(2)+"·2π/a · ":"")+"colour: band energy, white line: Brillouin zone";
+}
+function proj(kx,ky,z,S){const cy=cs(view.yaw),sy=sn(view.yaw),X=kx*cy-ky*sy,Y=kx*sy+ky*cy,cp=cs(view.pitch),sp=sn(view.pitch);return [X*S,-(Y*sp+z*cp)*S]}
+function draw3(){
+ const [x,W,H]=fit($("c3")),{R,h,vb,cb}=grid;x.clearRect(0,0,W,H);
+ let lo=1e9,hi=-1e9;for(let i=0;i<R*R;i++){lo=Math.min(lo,vb[i]);hi=Math.max(hi,cb[i])}
+ const span=Math.max(hi-lo,.5),mid=(hi+lo)/2,S=.34*Math.min(W,H),cx=W/2,cy=H/2+8;
+ const T=(kx,ky,E)=>{const p=proj(kx/h,ky/h,(E-mid)/span*1.5,S);return [cx+p[0],cy+p[1]]};
+ const floor=bzOutline();x.lineWidth=1;x.strokeStyle=css("--rule");
+ if(floor){x.beginPath();floor.forEach((p,i)=>{const q=T(p[0],p[1],lo-.04*span);i?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1])});x.closePath();x.stroke()}
+ const mesh=(Z,col)=>{x.strokeStyle=col;x.lineWidth=1;x.globalAlpha=.8;const st=m.dim===3?2:4;
+  for(let i=0;i<R;i+=st){x.beginPath();for(let j=0;j<R;j++){const q=T(-h+2*h*i/(R-1),-h+2*h*j/(R-1),Z[i*R+j]);j?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1])}x.stroke()}
+  for(let j=0;j<R;j+=st){x.beginPath();for(let i=0;i<R;i++){const q=T(-h+2*h*i/(R-1),-h+2*h*j/(R-1),Z[i*R+j]);i?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1])}x.stroke()}x.globalAlpha=1};
+ mesh(vb,css("--vb"));mesh(cb,css("--cb"));
+ const o=T(0,0,lo-.04*span),u=T(0,0,hi);x.strokeStyle=css("--muted");x.beginPath();x.moveTo(o[0],o[1]);x.lineTo(u[0],u[1]);x.stroke();x.fillStyle=css("--muted");x.font="12px "+FONT();x.fillText("E",u[0]+4,u[1]);
+}
+/* ---------- docs ---------- */
+const GR={alpha:"α",beta:"β",gamma:"γ",delta:"δ",epsilon:"ε",varepsilon:"ε",theta:"θ",sigma:"σ",pi:"π",Delta:"Δ",Gamma:"Γ",lambda:"λ",tau:"τ"};
+const SY={cdot:"·",pm:"±",mp:"∓",times:"×",ast:"∗",prime:"′",dagger:"†",langle:"⟨",rangle:"⟩",in:"∈",le:"≤",ge:"≥",approx:"≈",infty:"∞",equiv:"≡",sum:"∑"};
+const SP={",":"0.17em",";":"0.28em",":":"0.22em","!":"0em",quad:"1em",qquad:"2em"," ":"0.28em"};
+function tex2ml(src){
+ const T=src.match(/\\[A-Za-z]+|\\\\|\\.|[{}^_&]|[^\s]/g)||[];let i=0,big=false;
+ const mo=x=>"<mo>"+x+"</mo>";
+ function group(){const r=seq();i++;return r}
+ function arg(){if(T[i]==="{"){i++;return group()}return atom()}
+ function raw(){i++;let o="";while(i<T.length&&T[i]!=="}")o+=T[i++];i++;return o.replace(/\*/g,"∗")}
+ function seq(){const o=[];while(i<T.length&&T[i]!=="}"&&T[i]!=="&"&&T[i]!=="\\\\"&&T[i]!=="\\end")o.push(scripted());return "<mrow>"+o.join("")+"</mrow>"}
+ function scripted(){const b=atom(),bg=big;let sb="",sp="";while(T[i]==="_"||T[i]==="^"){const k=T[i++],g=arg();if(k==="_")sb=g;else sp=g}
+  if(!sb&&!sp)return b;const tg=bg?(sb&&sp?"munderover":sb?"munder":"mover"):(sb&&sp?"msubsup":sb?"msub":"msup");return "<"+tg+">"+b+sb+sp+"</"+tg+">"}
+ function atom(){
+  const t=T[i++];big=false;
+  if(t==="{")return group();
+  if(t[0]!=="\\"){if(/[0-9]/.test(t))return "<mn>"+t+"</mn>";if(/[A-Za-z]/.test(t))return "<mi>"+t+"</mi>";return mo(t==="<"?"&lt;":t===">"?"&gt;":t==="&"?"&amp;":t==="-"?"−":t)}
+  const c=t.slice(1);
+  if(GR[c])return "<mi>"+GR[c]+"</mi>";
+  if(c==="sum"){big=true;return '<mo largeop="true">∑</mo>'}
+  if(SY[c])return mo(SY[c]);
+  if(c in SP)return '<mspace width="'+SP[c]+'"></mspace>';
+  if(c==="{"||c==="}")return mo(c);
+  if(c==="frac"||c==="tfrac"){const x=arg(),y=arg();return "<mfrac>"+x+y+"</mfrac>"}
+  if(c==="sqrt")return "<msqrt>"+arg()+"</msqrt>";
+  if(c==="left"||c==="right"){const d=T[i++];return d==="."?"":mo(d)}
+  if(c==="mathrm")return '<mi mathvariant="normal">'+raw()+"</mi>";
+  if(c==="mathbf"||c==="boldsymbol")return '<mstyle style="font-weight:bold;font-style:normal">'+arg()+"</mstyle>";
+  if(c==="sin"||c==="cos"||c==="exp")return "<mi>"+c+"</mi><mo>&#x2061;</mo>";
+  if(c==="begin"){raw();const rows=[];let row=[];
+   for(;;){row.push("<mtd>"+seq()+"</mtd>");if(T[i]==="&"){i++;continue}if(T[i]==="\\\\"){i++;rows.push(row);row=[];continue}if(T[i]==="\\end"){i++;raw();rows.push(row);break}if(i>=T.length){rows.push(row);break}}
+   return "<mrow><mo>(</mo><mtable>"+rows.map(r=>"<mtr>"+r.join("")+"</mtr>").join("")+"</mtable><mo>)</mo></mrow>"}
+  return "<mtext>"+c+"</mtext>";
+ }
+ return seq();
+}
+function renderTex(h){return h.replace(/\$\$([\s\S]+?)\$\$/g,(_,t)=>'<div class="eq"><math display="block">'+tex2ml(t)+"</math></div>").replace(/\$([^$]+?)\$/g,(_,t)=>"<math>"+tex2ml(t)+"</math>")}
+const DOCS={
+hex:String.raw`<p>p<sub>z</sub> orbital on sublattice A and B; $\boldsymbol\delta_j$ are the three nearest-neighbour vectors, $\mathbf a_{1,2}$ the lattice vectors.</p>
+$$H(\mathbf k)=\begin{pmatrix}\varepsilon_A-t'g(\mathbf k) & -t\,f(\mathbf k)\\ -t\,f^{*}(\mathbf k) & \varepsilon_B-t'g(\mathbf k)\end{pmatrix}$$
+$$f(\mathbf k)=\sum_{j=1}^{3}e^{i\mathbf k\cdot\boldsymbol\delta_j},\qquad |f|^2=3+g(\mathbf k)$$
+$$g(\mathbf k)=2\left[\cos(\mathbf k\cdot\mathbf a_1)+\cos(\mathbf k\cdot\mathbf a_2)+\cos(\mathbf k\cdot(\mathbf a_2-\mathbf a_1))\right]$$
+$$E_\pm(\mathbf k)=\frac{\varepsilon_A+\varepsilon_B}{2}-t'g(\mathbf k)\pm\sqrt{\Delta^2+t^2\,|f(\mathbf k)|^2},\qquad \Delta=\frac{\varepsilon_A-\varepsilon_B}{2}$$
+<p>Graphene ($\Delta=0$): $E_\pm(\Gamma)=\pm3t$ and the bands touch at K. For hBN the gap at K is $E_g=2|\Delta|$, independent of $t'$.</p>`,
+mos:String.raw`<p>Basis $d_{z^2},d_{xy},d_{x^2-y^2}$ of Mo; $\alpha=\tfrac12k_xa$, $\beta=\tfrac{\sqrt3}{2}k_ya$.</p>
+$$H(\mathbf k)=\begin{pmatrix}V_0&V_1&V_2\\V_1^{*}&V_{11}&V_{12}\\V_2^{*}&V_{12}^{*}&V_{22}\end{pmatrix}$$
+<p>Nearest-neighbour part ($r=u=0$), Eqs. (5)–(10) of Liu et al.:</p>
+$$V_0=\varepsilon_1+2t_0\left(\cos2\alpha+2\cos\alpha\cos\beta\right)$$
+$$V_{11}=\varepsilon_2+2t_{11}\cos2\alpha+(t_{11}+3t_{22})\cos\alpha\cos\beta$$
+$$V_{22}=\varepsilon_2+2t_{22}\cos2\alpha+(3t_{11}+t_{22})\cos\alpha\cos\beta$$
+$$V_1=-2\sqrt3\,t_2\sin\alpha\sin\beta+2i\,t_1\left(\sin2\alpha+\sin\alpha\cos\beta\right)$$
+$$V_2=2t_2\left(\cos2\alpha-\cos\alpha\cos\beta\right)+2\sqrt3\,i\,t_1\cos\alpha\sin\beta$$
+$$V_{12}=\sqrt3\,(t_{22}-t_{11})\sin\alpha\sin\beta+4i\,t_{12}\sin\alpha\left(\cos\alpha-\cos\beta\right)$$
+<p>The $r$ and $u$ terms (Eqs. 14–22 of the paper) are included in full. At K, for $r=u=0$:</p>
+$$E_c=\varepsilon_1-3t_0,\qquad E_v=\varepsilon_2-\tfrac32(t_{11}+t_{22})-3\sqrt3\,t_{12},\qquad E_g=E_c-E_v$$`,
+zb:String.raw`<p>Ten orbitals: $s,p_x,p_y,p_z,s^{*}$ on anion (a) and cation (c); nearest-neighbour bonds only.</p>
+$$H(\mathbf k)=\begin{pmatrix}H_{aa}&H_{ac}(\mathbf k)\\H_{ac}^{\dagger}(\mathbf k)&H_{cc}\end{pmatrix},\qquad H_{bb}=\mathrm{diag}\left(E_{s,b},E_{p,b},E_{p,b},E_{p,b},E_{s^*,b}\right)$$
+$$g_0=\frac14\sum_{\delta}e^{i\mathbf k\cdot\boldsymbol\delta},\qquad g_j=\frac14\sum_{\delta}\mathrm{sgn}_j(\delta)\,e^{i\mathbf k\cdot\boldsymbol\delta},\qquad \boldsymbol\delta\in\tfrac a4\{(1,1,1),(1,-1,-1),(-1,1,-1),(-1,-1,1)\}$$
+<div class="eq" style="font-size:.88em"><math display="block">PLACEHOLDER</math></div>
+<p>Closed form at $\Gamma$ ($g_0=1$, $g_j=0$):</p>
+$$E_{\Gamma_{15}}=\frac{E_{p,a}+E_{p,c}}{2}\pm\sqrt{\left(\frac{E_{p,a}-E_{p,c}}{2}\right)^2+V_{xx}^2}$$
+$$E_{\Gamma_{1}}=\frac{E_{s,a}+E_{s,c}}{2}\pm\sqrt{\left(\frac{E_{s,a}-E_{s,c}}{2}\right)^2+V_{ss}^2}$$
+<p>Valence bands: the four lowest. Si and GaAs follow the Vogl et al. table. The GaAs set was cross-checked against a published reproduction; the Si set only through its Γ energies and the X-region conduction minimum.</p>`
+};
+const HAC=String.raw`H_{ac}=\begin{pmatrix}V_{ss}g_0&V_{\mathrm{sa,pc}}g_1&V_{\mathrm{sa,pc}}g_2&V_{\mathrm{sa,pc}}g_3&0\\-V_{\mathrm{pa,sc}}g_1&V_{xx}g_0&V_{xy}g_3&V_{xy}g_2&-V_{\mathrm{pa,s*c}}g_1\\-V_{\mathrm{pa,sc}}g_2&V_{xy}g_3&V_{xx}g_0&V_{xy}g_1&-V_{\mathrm{pa,s*c}}g_2\\-V_{\mathrm{pa,sc}}g_3&V_{xy}g_2&V_{xy}g_1&V_{xx}g_0&-V_{\mathrm{pa,s*c}}g_3\\0&V_{\mathrm{s*a,pc}}g_1&V_{\mathrm{s*a,pc}}g_2&V_{\mathrm{s*a,pc}}g_3&0\end{pmatrix}`;
+DOCS.zb=DOCS.zb.replace("PLACEHOLDER",tex2ml(HAC));
+const PINFO={
+hex:String.raw`$\varepsilon_A,\varepsilon_B$: on-site energies of sublattices A and B (equal: graphene; $\pm\Delta$: hBN). $t$: nearest-neighbour hopping. $t'$: next-nearest-neighbour hopping. $a$: lattice constant.`,
+mos:String.raw`$\varepsilon_1,\varepsilon_2$: on-site energies of $d_{z^2}$ and of $d_{xy},d_{x^2-y^2}$. $t_0$: $d_{z^2}$–$d_{z^2}$ hopping; $t_1,t_2$: $d_{z^2}$ to $d_{xy}$, $d_{x^2-y^2}$; $t_{11},t_{12},t_{22}$: among $d_{xy},d_{x^2-y^2}$. $t$: nearest, $r$: second, $u$: third neighbour Mo–Mo (set $r=u=0$ for the NN model).`,
+zb:String.raw`$E(\ell,b)$: on-site energy of orbital $\ell=s,p,s^*$ on anion ($b=a$) or cation ($b=c$). $V(s,s)$, $V(x,x)$, $V(x,y)$: nearest-neighbour s–s, p–p diagonal and p–p off-diagonal hoppings. $V(sa,pc)$, $V(pa,sc)$, $V(s^*a,pc)$, $V(pa,s^*c)$: s or s* to p across the anion–cation bond. $a$: cubic lattice constant.`
+};
+/* ---------- UI ---------- */
+function buildParams(){
+ const box=$("params");box.innerHTML="";const keys=[["a","a (Å)"]].concat(m.keys);
+ for(const [k,lab] of keys){const L=document.createElement("label");L.textContent=lab;const i=document.createElement("input");i.type="number";i.step="0.001";i.dataset.k=k;i.setAttribute("aria-label",lab);i.addEventListener("input",schedule);L.appendChild(i);box.appendChild(L);inputs[k]=i}
+}
+function applyPreset(name){const pr=m.presets[name];a=pr.a;for(const k in inputs)inputs[k].value=k==="a"?pr.a:(pr[k]||0)}
+function readParams(){P={};for(const k in inputs){const v=parseFloat(inputs[k].value);P[k]=isFinite(v)?v:0}a=P.a>0.1?P.a:1}
+function setModel(id,name){
+ mid=id;m=MODELS[id];bufs.A=new Float64Array(m.n*m.n);bufs.B=new Float64Array(m.n*m.n);bufs.R=new Float64Array(4*m.n*m.n);
+ for(const k in inputs)delete inputs[k];buildParams();
+ applyPreset(name||Object.keys(m.presets)[0]);$("note").textContent=m.note;$("doc").innerHTML=renderTex(DOCS[id]);$("pinfo").innerHTML=renderTex(PINFO[id]);$("kzrow").hidden=m.dim!==3;recompute();
+}
+let tm=0;function schedule(){clearTimeout(tm);tm=setTimeout(recompute,140)}
+function recompute(){readParams();calcPath();calcGrid();const ex=readouts();draw(ex)}
+let lastEx=null;
+function draw(ex){if(ex)lastEx=ex;drawBands(lastEx);drawMap();draw3()}
+/* ---------- init ---------- */
+(function(){
+ const sel=$("model");
+ sel.innerHTML=Object.keys(MODELS).map(k=>'<optgroup label="'+MODELS[k].name+'">'+Object.keys(MODELS[k].presets).map(n=>'<option value="'+k+'|'+n+'">'+n+"</option>").join("")+"</optgroup>").join("");
+ sel.addEventListener("change",()=>{const q=sel.value.split("|");if(q[0]!==mid)setModel(q[0],q[1]);else{applyPreset(q[1]);recompute()}});
+ $("kz").addEventListener("input",()=>{$("kzo").textContent=parseFloat($("kz").value).toFixed(2)+" · 2π/a";schedule()});
+ document.querySelectorAll("input[name=mb]").forEach(e=>e.addEventListener("change",()=>draw()));
+ const c=$("c3");let dr=null;
+ c.addEventListener("pointerdown",e=>{dr=[e.clientX,e.clientY];c.setPointerCapture(e.pointerId)});
+ c.addEventListener("pointermove",e=>{if(!dr)return;view.yaw+=(e.clientX-dr[0])*.008;view.pitch=Math.min(PI/2,Math.max(0,view.pitch+(e.clientY-dr[1])*.008));dr=[e.clientX,e.clientY];draw3()});
+ c.addEventListener("pointerup",()=>dr=null);
+ const rs=()=>{view={yaw:-.6,pitch:1.0};draw3()};$("reset").addEventListener("click",rs);c.addEventListener("dblclick",rs);
+ window.addEventListener("resize",()=>draw());
+ setModel("hex","Graphene");
+})();
+</script>
+<script src="../../nav.js"></script>
+</body>
+</html>

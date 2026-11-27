@@ -12,5 +12,12 @@
     "desc": "Single-domain particle with uniaxial anisotropy. Sweep the field and watch the magnetization track the energy minimum, flip, and trace the hysteresis loop. Tune the field angle, anisotropy strength and field amplitude; show energy, vector and m(h) panels.",
     "tags": ["magnetism", "hysteresis", "Stoner-Wohlfarth"],
     "on": true
+  },
+  {
+    "slug": "tight-binding-bands",
+    "title": "Tight-binding Band Structures",
+    "desc": "Explore tight-binding bands for graphene, hBN, dichalcogenides, silicon and GaAs. Adjust model parameters and inspect band paths, k-plane maps and 3D surfaces.",
+    "tags": ["solid-state physics", "band structure", "tight binding"],
+    "on": true
   }
 ]
