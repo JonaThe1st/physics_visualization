@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FMR – Magnetization Precession</title>
+<script src="../../nav.js" defer></script>
+<style>
+  :root {
+    --paper: #E9EEF2;
+    --panel: #F6F8FA;
+    --ink: #172233;
+    --muted: #55657A;
+    --rule: #B4C0CB;
+    --orbit: #C2255C;
+    --field: #0B7285;
+    --plot: #FBFCFD;
+    --grid: #DDE5EC;
+    --grid-strong: #B9C6D2;
+    --warn: #8A4B00;
+    --warn-bg: #FFF1D6;
+    --bg: #E9EEF2; --fg: #172233; --mut: #55657A; --card: #F6F8FA; --bd: #B4C0CB; --sph: #0B7285; --pt: #172233;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #0E1621;
+      --panel: #141E2B;
+      --ink: #E5ECF3;
+      --muted: #95A5B8;
+      --rule: #2F4054;
+      --orbit: #FF6E9C;
+      --field: #4FCBE0;
+      --plot: #101A27;
+      --grid: #1B2A3B;
+      --grid-strong: #2C405A;
+      --warn: #FFD38A;
+      --warn-bg: #3A2A0E;
+      --bg: #0E1621; --fg: #E5ECF3; --mut: #95A5B8; --card: #141E2B; --bd: #2F4054; --sph: #4FCBE0; --pt: #E5ECF3;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    font-size: 16px;
+    line-height: 1.45;
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+
+  .top { padding: 20px 60px 4px 60px; max-width: 1700px; margin: 0 auto; }
+  .top h1 {
+    margin: 0;
+    font-size: clamp(26px, 3.4vw, 38px);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+  }
+  .top p { margin: 8px 0 0; max-width: 70ch; color: var(--muted); }
+
+  .app {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr) 370px;
+    grid-template-areas: "controls stage side";
+    gap: 24px;
+    padding: 16px 24px 32px;
+    max-width: 1700px;
+    margin: 0 auto;
+    align-items: start;
+  }
+  .controls { grid-area: controls; }
+  .stage { grid-area: stage; min-width: 0; }
+  .side { grid-area: side; min-width: 0; }
+
+  @media (max-width: 1180px) {
+    .app {
+      grid-template-columns: minmax(0, 1fr) 360px;
+      grid-template-areas: "stage side" "controls controls";
+    }
+    .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0 28px; }
+  }
+  @media (max-width: 760px) {
+    .app { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "side" "controls"; padding: 12px 14px 28px; }
+    .top { padding: 16px 50px 0 14px; }
+  }
+
+  h2 {
+    font-size: 17px;
+    font-weight: 600;
+    margin: 0 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--rule);
+  }
+  h3 { font-size: 16px; font-weight: 600; margin: 0 0 6px; }
+  .grp { margin: 0 0 22px; }
+  .grp[hidden] { display: none; }
+
+  .row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px; font-size: 15px; }
+  .row output { font-weight: 600; }
+  .row .extra { color: var(--muted); font-weight: 400; margin-left: 6px; font-size: 14px; }
+  input[type="range"] { width: 100%; margin: 2px 0 0; accent-color: var(--field); }
+  select {
+    width: 100%; font: inherit; font-size: 15px; padding: 6px 8px; margin-top: 4px;
+    color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 4px;
+  }
+  .field { display: block; font-size: 15px; }
+  .check { display: flex; gap: 8px; align-items: center; margin-top: 10px; font-size: 15px; }
+  .check input { accent-color: var(--field); }
+  .seg { display: grid; gap: 6px; margin-bottom: 6px; }
+  .seg label { display: flex; gap: 8px; align-items: center; font-size: 15px; }
+  .seg input { accent-color: var(--field); }
+  .hint { margin: 8px 0 0; font-size: 14px; color: var(--muted); }
+
+  button {
+    font: inherit; font-size: 15px; padding: 7px 14px; cursor: pointer;
+    color: var(--ink); background: transparent; border: 1px solid var(--ink); border-radius: 4px;
+  }
+  button:hover { background: var(--ink); color: var(--paper); }
+  button.primary { background: var(--ink); color: var(--paper); }
+  button.primary:hover { background: var(--field); border-color: var(--field); color: #fff; }
+  button.small { padding: 4px 10px; font-size: 14px; margin-top: 8px; }
+  :focus-visible { outline: 2px solid var(--field); outline-offset: 2px; }
+
+  .stage-box { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 8px; }
+  #c3d {
+    display: block; width: 100%; height: clamp(420px, 74vh, 780px);
+    cursor: grab; touch-action: none; border-radius: 4px;
+  }
+  #c3d.dragging { cursor: grabbing; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 2px 2px; align-items: center; }
+  .toolbar .grow { flex: 1 1 200px; color: var(--muted); font-size: 14px; text-align: right; }
+  @media (max-width: 760px) { #c3d { height: auto; aspect-ratio: 1 / 1.05; } .toolbar .grow { text-align: left; } }
+
+  .plot { display: block; width: 100%; border: 1px solid var(--rule); border-radius: 4px; background: var(--plot); }
+  #c2d { aspect-ratio: 1 / 1; }
+  #ctr { aspect-ratio: 16 / 9; }
+  .plotbox { margin-bottom: 18px; }
+  .plotbox .hint { margin-top: 4px; }
+
+  dl.res { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; margin: 0 0 14px; font-size: 15px; }
+  dl.res dt { color: var(--muted); }
+  dl.res dd { margin: 0; text-align: right; font-weight: 600; }
+  .warn {
+    margin: 0 0 14px; padding: 8px 10px; font-size: 14px; color: var(--warn);
+    background: var(--warn-bg); border-left: 3px solid var(--warn);
+  }
+  .warn[hidden] { display: none; }
+
+  details { font-size: 14.5px; color: var(--muted); }
+  details summary { cursor: pointer; color: var(--ink); font-weight: 600; font-size: 16px; }
+  details p { margin: 8px 0; }
+  .eq { font-style: italic; color: var(--ink); }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>Ferromagnetic Resonance</h1>
+  <p>The magnetization precesses around the effective field until damping returns it to equilibrium. Choose the geometry (demagnetizing factors), field and damping, and watch the orbit.</p>
+</header>
+
+<main class="app">
+
+  <aside class="controls" aria-label="Settings">
+    <div>
+      <section class="grp" id="g-geo">
+        <h2>Geometry</h2>
+        <label class="field">Preset
+          <select id="preset">
+            <option value="filmIn">Thin film, field in plane</option>
+            <option value="filmOut">Thin film, field perpendicular</option>
+            <option value="sphere">Sphere</option>
+            <option value="needleAlong">Long needle, field along axis</option>
+            <option value="needleAcross">Long needle, field across axis</option>
+            <option value="prolate">Prolate ellipsoid (small Nz)</option>
+            <option value="triaxial">Triaxial ellipsoid</option>
+            <option value="custom">Custom</option>
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" id="sumOne" checked> Enforce ΣN = 1 (ellipsoid)</label>
+      </section>
+
+      <section class="grp" id="g-field">
+        <h2>Static field</h2>
+      </section>
+    </div>
+
+    <div>
+      <section class="grp" id="g-damp">
+        <h2>Damping</h2>
+      </section>
+
+      <section class="grp" id="g-exc">
+        <h2>Excitation</h2>
+        <div class="seg" role="radiogroup" aria-label="Excitation type">
+          <label><input type="radio" name="mode" value="free" checked> Free precession (kick)</label>
+          <label><input type="radio" name="mode" value="rf"> Driven by RF field</label>
+        </div>
+        <div id="g-free"></div>
+        <div id="g-rf" hidden>
+          <label class="field">Polarization
+            <select id="rfPol">
+              <option value="lin">linear (along e₁)</option>
+              <option value="co">circular, co-rotating with precession</option>
+              <option value="counter">circular, counter-rotating</option>
+            </select>
+          </label>
+        </div>
+      </section>
+    </div>
+
+    <div>
+      <section class="grp" id="g-mat">
+        <h2>Material and display</h2>
+        <p class="hint" id="matHint">Permalloy ≈ 1.0 T · YIG ≈ 0.18 T · Fe ≈ 2.2 T</p>
+      </section>
+    </div>
+  </aside>
+
+  <section class="stage" aria-label="Three-dimensional view">
+    <div class="stage-box">
+      <canvas id="c3d" role="img" aria-label="Orbit of the magnetization on the unit sphere"></canvas>
+      <div class="toolbar">
+        <button id="btnPause" class="primary" type="button">Pause</button>
+        <button id="btnRestart" type="button">Restart</button>
+        <button id="btnClear" type="button">Clear trail</button>
+        <button id="btnView" type="button">Reset view</button>
+        <span class="grow">Drag to rotate, scroll to zoom. The default view keeps H pointing up.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="side" aria-label="Results">
+    <h2>Key figures</h2>
+    <p class="warn" id="warn" hidden></p>
+    <dl class="res" id="res"></dl>
+
+    <div class="plotbox">
+      <h3>Orbit perpendicular to m₀</h3>
+      <canvas id="c2d" class="plot" role="img" aria-label="Projection of the orbit onto the plane perpendicular to equilibrium"></canvas>
+      <p class="hint" id="hint2d"></p>
+    </div>
+
+    <div class="plotbox">
+      <h3>Deflection over time</h3>
+      <canvas id="ctr" class="plot" role="img" aria-label="Transverse components of the magnetization over time"></canvas>
+      <p class="hint" id="hintTr"></p>
+    </div>
+
+    <details>
+      <summary>Model and formulas</summary>
+      <p>Landau–Lifshitz–Gilbert equation for the normalized magnetization m (|m| = 1):</p>
+      <p class="eq">dm/dt = −m × h<sub>eff</sub> − α m × (m × h<sub>eff</sub>), divided by (1 + α²)</p>
+      <p class="eq">h<sub>eff</sub> = h − (N<sub>x</sub>m<sub>x</sub>, N<sub>y</sub>m<sub>y</sub>, N<sub>z</sub>m<sub>z</sub>) + h<sub>RF</sub>(t)</p>
+      <p>Fields are in units of M<sub>s</sub>, time in units of 1/(γμ₀M<sub>s</sub>). The equilibrium m₀ is found numerically from the energy density e = −h·m + ½ΣN<sub>i</sub>m<sub>i</sub>².</p>
+      <p>The resonance frequency follows from the curvature of e around m₀ (Smit–Beljers): ω₀ = √(λ₁λ₂). The ratio of the orbit's semi-axes is √(λ₂/λ₁). For h ∥ z and m₀ ∥ z this gives the Kittel formula</p>
+      <p class="eq">ω₀ = √[(h + N<sub>x</sub> − N<sub>z</sub>)(h + N<sub>y</sub> − N<sub>z</sub>)]</p>
+      <p>The amplitude decay rate is Γ = α(λ₁+λ₂) / [2(1+α²)] and the damped frequency is ω<sub>d</sub>² = ω₀²/(1+α²) − Γ². Both hold for small deflections.</p>
+    </details>
+  </section>
+
+</main>
+
+<script>
+(() => {
+  'use strict';
+
+  const TAU = Math.PI * 2;
+  const DEG = Math.PI / 180;
+  const GAMMA_GHZ_PER_T = 28.0249;       // γ/2π in GHz/T
+  const PS_PER_UNIT_T = 5.6786;          // 1/(γ·1 T) in ps
+  const CAP = 6000;                      // ring buffer for the orbit
+
+  // ------------------------------------------------------------------
+  // State
+  // ------------------------------------------------------------------
+  const PRESETS = {
+    filmIn:       { N: [1, 0, 0],        h: 0.5, thH: 0,  phH: 0 },
+    filmOut:      { N: [0, 0, 1],        h: 1.5, thH: 0,  phH: 0 },
+    sphere:       { N: [1/3, 1/3, 1/3],  h: 1.0, thH: 0,  phH: 0 },
+    needleAlong:  { N: [0.5, 0.5, 0],    h: 1.0, thH: 0,  phH: 0 },
+    needleAcross: { N: [0, 0.5, 0.5],    h: 1.0, thH: 0,  phH: 0 },
+    prolate:      { N: [0.45, 0.45, 0.1],h: 1.0, thH: 0,  phH: 0 },
+    triaxial:     { N: [0.1, 0.3, 0.6],  h: 1.2, thH: 0,  phH: 0 }
+  };
+
+  const state = {
+    N: [0, 0, 1], sumOne: true,
+    h: 0.5, thH: 90, phH: 0,
+    alpha: 0.05,
+    mode: 'free', kick: 25,
+    rfAmp: 0.03, rfRatio: 1, rfPol: 'lin',
+    ms: 1.0, speed: 0.6, trailLen: 2500,
+    paused: false
+  };
+
+  // Slider spec: key, label (HTML), group, range, format
+  const SLIDERS = [
+    { key: 'Nx',  label: 'N<sub>x</sub>', group: 'g-geo', min: 0, max: 1, step: 0.01, dec: 2, idx: 0 },
+    { key: 'Ny',  label: 'N<sub>y</sub>', group: 'g-geo', min: 0, max: 1, step: 0.01, dec: 2, idx: 1 },
+    { key: 'Nz',  label: 'N<sub>z</sub>', group: 'g-geo', min: 0, max: 1, step: 0.01, dec: 2, idx: 2 },
+    { key: 'h',   label: 'Field strength h = H/M<sub>s</sub>', group: 'g-field', min: 0, max: 3, step: 0.01, dec: 2 },
+    { key: 'thH', label: 'Field direction, polar angle (from z)', group: 'g-field', min: 0, max: 180, step: 1, dec: 0, unit: '°' },
+    { key: 'phH', label: 'Field direction, azimuth (from x)', group: 'g-field', min: 0, max: 360, step: 1, dec: 0, unit: '°' },
+    { key: 'alpha', label: 'Gilbert damping α', group: 'g-damp', log: true, lo: 0.001, hi: 1, sig: 2 },
+    { key: 'kick', label: 'Initial deflection δ', group: 'g-free', min: 1, max: 90, step: 1, dec: 0, unit: '°' },
+    { key: 'rfAmp', label: 'RF amplitude h<sub>RF</sub>', group: 'g-rf', log: true, lo: 0.002, hi: 0.3, sig: 2 },
+    { key: 'rfRatio', label: 'RF frequency Ω/ω₀', group: 'g-rf', min: 0.2, max: 2, step: 0.005, dec: 3 },
+    { key: 'ms',  label: 'μ₀M<sub>s</sub>', group: 'g-mat', min: 0.05, max: 2.5, step: 0.01, dec: 2, unit: ' T' },
+    { key: 'speed', label: 'Speed (periods per second)', group: 'g-mat', min: 0.05, max: 3, step: 0.05, dec: 2 },
+    { key: 'trailLen', label: 'Trail length (points)', group: 'g-mat', min: 200, max: CAP, step: 100, dec: 0 }
+  ];
+  const RESTART_KEYS = new Set(['Nx', 'Ny', 'Nz', 'h', 'thH', 'phH', 'kick']);
+  const GEOMETRY_KEYS = new Set(['Nx', 'Ny', 'Nz', 'h', 'thH', 'phH']);
+
+  const $ = (s) => document.querySelector(s);
+  const num = (v, d) => v.toFixed(d);
+  const sig = (v, n) => Number(v.toPrecision(n)).toString();
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+  // ------------------------------------------------------------------
+  // Vector helpers
+  // ------------------------------------------------------------------
+  const dot = (a, b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+  const cross = (a, b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+  const norm = (a) => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0]/l, a[1]/l, a[2]/l]; };
+  const comb = (a, s, b, r) => [a[0]*s + b[0]*r, a[1]*s + b[1]*r, a[2]*s + b[2]*r];
+
+  // ------------------------------------------------------------------
+  // Physics: field, equilibrium, Hessian
+  // ------------------------------------------------------------------
+  function fieldVec() {
+    const th = state.thH * DEG, ph = state.phH * DEG;
+    return [state.h * Math.sin(th) * Math.cos(ph),
+            state.h * Math.sin(th) * Math.sin(ph),
+            state.h * Math.cos(th)];
+  }
+
+  function findEquilibrium(hv) {
+    const N = state.N;
+    const hn = Math.hypot(hv[0], hv[1], hv[2]);
+    let m = hn > 1e-9
+      ? norm([hv[0]/hn + 0.013, hv[1]/hn + 0.009, hv[2]/hn + 0.011])
+      : norm([0.31, 0.52, 0.79]);
+    const eta = 0.5 / (1 + state.h + Math.max(N[0], N[1], N[2]));
+    for (let it = 0; it < 30000; it++) {
+      const gx = -hv[0] + N[0]*m[0], gy = -hv[1] + N[1]*m[1], gz = -hv[2] + N[2]*m[2];
+      const d = gx*m[0] + gy*m[1] + gz*m[2];
+      const tx = gx - d*m[0], ty = gy - d*m[1], tz = gz - d*m[2];
+      if (tx*tx + ty*ty + tz*tz < 1e-26) break;
+      m = norm([m[0] - eta*tx, m[1] - eta*ty, m[2] - eta*tz]);
+    }
+    return m;
+  }
+
+  let eq = null;      // equilibrium and Hessian
+  let H0 = [0, 0, 1]; // static field
+  let Fm = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];   // view frame: rotates H to point up on screen
+
+  function updateFrame() {
+    const hn = Math.hypot(H0[0], H0[1], H0[2]);
+    if (hn < 1e-9) { Fm = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]; return; }
+    const a = [H0[0] / hn, H0[1] / hn, H0[2] / hn];
+    const c = a[2];
+    if (c > 0.999999) { Fm = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]; return; }
+    if (c < -0.999999) { Fm = [[1, 0, 0], [0, -1, 0], [0, 0, -1]]; return; }
+    const sn = Math.hypot(a[0], a[1]);
+    const k = [a[1] / sn, -a[0] / sn, 0], o = 1 - c;
+    Fm = [
+      [c + o*k[0]*k[0], o*k[0]*k[1] - sn*k[2], o*k[0]*k[2] + sn*k[1]],
+      [o*k[1]*k[0] + sn*k[2], c + o*k[1]*k[1], o*k[1]*k[2] - sn*k[0]],
+      [o*k[2]*k[0] - sn*k[1], o*k[2]*k[1] + sn*k[0], c + o*k[2]*k[2]]
+    ];
+  }
+
+  function analyze() {
+    H0 = fieldVec();
+    updateFrame();
+    const N = state.N;
+    const m0 = findEquilibrium(H0);
+    const g = -dot(H0, m0) + N[0]*m0[0]*m0[0] + N[1]*m0[1]*m0[1] + N[2]*m0[2]*m0[2];
+    const a = Math.abs(m0[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0];
+    const t1 = norm(cross(a, m0));
+    const t2 = cross(m0, t1);
+    const q = (u, v) => N[0]*u[0]*v[0] + N[1]*u[1]*v[1] + N[2]*u[2]*v[2];
+    const H11 = q(t1, t1) - g, H22 = q(t2, t2) - g, H12 = q(t1, t2);
+    const mean = (H11 + H22) / 2, rad = Math.hypot((H11 - H22) / 2, H12);
+    const lamMin = mean - rad, lamMax = mean + rad;
+    // e1: direction of lowest stiffness (long semi-axis of the orbit)
+    const psi = 0.5 * Math.atan2(2*H12, H11 - H22) + Math.PI / 2;
+    const e1 = comb(t1, Math.cos(psi), t2, Math.sin(psi));
+    const e2 = cross(m0, e1);
+    eq = { m0, e1, e2, lamMin, lamMax, det: lamMin * lamMax, ok: lamMin > 1e-4 };
+  }
+
+  const w0 = () => (eq && eq.ok ? Math.sqrt(eq.det) : 1);
+  const gammaDecay = () => (eq && eq.ok ? state.alpha * (eq.lamMin + eq.lamMax) / (2 * (1 + state.alpha*state.alpha)) : 0);
+
+  // ------------------------------------------------------------------
+  // Dynamics: LLG (Landau-Lifshitz form), RK4
+  // ------------------------------------------------------------------
+  let m = [0, 0, 1], t = 0, phase = 0;
+  const k1 = [0,0,0], k2 = [0,0,0], k3 = [0,0,0], k4 = [0,0,0], tmp = [0,0,0];
+
+  function deriv(mm, ph, out) {
+    const N = state.N, al = state.alpha;
+    let hx = H0[0] - N[0]*mm[0], hy = H0[1] - N[1]*mm[1], hz = H0[2] - N[2]*mm[2];
+    if (state.mode === 'rf') {
+      const c = Math.cos(ph), s = Math.sin(ph), A = state.rfAmp;
+      const c1 = c;
+      const c2 = state.rfPol === 'lin' ? 0 : (state.rfPol === 'co' ? s : -s);
+      hx += A * (c1*eq.e1[0] + c2*eq.e2[0]);
+      hy += A * (c1*eq.e1[1] + c2*eq.e2[1]);
+      hz += A * (c1*eq.e1[2] + c2*eq.e2[2]);
+    }
+    const cx = mm[1]*hz - mm[2]*hy, cy = mm[2]*hx - mm[0]*hz, cz = mm[0]*hy - mm[1]*hx;   // m × h
+    const dx = mm[1]*cz - mm[2]*cy, dy = mm[2]*cx - mm[0]*cz, dz = mm[0]*cy - mm[1]*cx;   // m × (m × h)
+    const f = -1 / (1 + al*al);
+    out[0] = f * (cx + al*dx);
+    out[1] = f * (cy + al*dy);
+    out[2] = f * (cz + al*dz);
+  }
+
+  function rk4(dt) {
+    const Om = state.rfRatio * w0();
+    const p0 = phase;
+    deriv(m, p0, k1);
+    for (let i = 0; i < 3; i++) tmp[i] = m[i] + 0.5*dt*k1[i];
+    deriv(tmp, p0 + 0.5*dt*Om, k2);
+    for (let i = 0; i < 3; i++) tmp[i] = m[i] + 0.5*dt*k2[i];
+    deriv(tmp, p0 + 0.5*dt*Om, k3);
+    for (let i = 0; i < 3; i++) tmp[i] = m[i] + dt*k3[i];
+    deriv(tmp, p0 + dt*Om, k4);
+    const nm = [0, 0, 0];
+    for (let i = 0; i < 3; i++) nm[i] = m[i] + dt/6 * (k1[i] + 2*k2[i] + 2*k3[i] + k4[i]);
+    m = norm(nm);
+    t += dt;
+    phase += dt * Om;
+  }
+
+  // Ring buffer of the orbit
+  const rx = new Float64Array(CAP), ry = new Float64Array(CAP), rz = new Float64Array(CAP), rt = new Float64Array(CAP);
+  let ringN = 0, ringHead = 0;
+  function pushPoint() {
+    rx[ringHead] = m[0]; ry[ringHead] = m[1]; rz[ringHead] = m[2]; rt[ringHead] = t;
+    ringHead = (ringHead + 1) % CAP;
+    if (ringN < CAP) ringN++;
+  }
+  function visibleCount() { return Math.min(state.trailLen, ringN); }
+  function slot(k, L) { return (ringHead - L + k + CAP) % CAP; }
+
+  function advance(dtFrame) {
+    const T0 = TAU / w0();
+    const adv = state.speed * T0 * dtFrame;
+    const n = clamp(Math.ceil(adv / 0.02), 1, 600);
+    const dt = adv / n;
+    for (let i = 0; i < n; i++) { rk4(dt); pushPoint(); }
+  }
+
+  function restart() {
+    analyze();
+    t = 0; phase = 0; ringN = 0; ringHead = 0;
+    if (state.mode === 'free') {
+      const d = state.kick * DEG;
+      m = norm(comb(eq.m0, Math.cos(d), eq.e1, Math.sin(d)));
+    } else {
+      m = eq.m0.slice();
+    }
+    pushPoint();
+    refreshReadouts();
+  }
+
+  function clearTrail() {
+    ringN = 0; ringHead = 0; pushPoint();
+  }
+
+  // ------------------------------------------------------------------
+  // UI: build and bind sliders
+  // ------------------------------------------------------------------
+  const inputs = {}, outputs = {}, extras = {};
+
+  function buildSliders() {
+    for (const s of SLIDERS) {
+      const box = document.getElementById(s.group);
+      const row = document.createElement('div');
+      row.className = 'row';
+      const lab = document.createElement('label');
+      lab.htmlFor = 'in-' + s.key;
+      lab.innerHTML = s.label;
+      const right = document.createElement('span');
+      const out = document.createElement('output');
+      out.htmlFor = 'in-' + s.key;
+      const ex = document.createElement('span');
+      ex.className = 'extra';
+      right.append(out, ex);
+      row.append(lab, right);
+
+      const inp = document.createElement('input');
+      inp.type = 'range';
+      inp.id = 'in-' + s.key;
+      inp.dataset.key = s.key;
+      if (s.log) { inp.min = 0; inp.max = 1; inp.step = 0.001; }
+      else { inp.min = s.min; inp.max = s.max; inp.step = s.step; }
+      box.append(row, inp);
+      inputs[s.key] = inp; outputs[s.key] = out; extras[s.key] = ex;
+      inp.addEventListener('input', () => onSlider(s));
+    }
+  }
+
+  function specValue(s) {
+    if (s.idx !== undefined) return state.N[s.idx];
+    return state[s.key];
+  }
+
+  function syncUI() {
+    for (const s of SLIDERS) {
+      const v = specValue(s);
+      inputs[s.key].value = s.log ? Math.log(v / s.lo) / Math.log(s.hi / s.lo) : v;
+      outputs[s.key].textContent = s.log ? sig(v, s.sig) : num(v, s.dec) + (s.unit || '');
+    }
+    updateExtras();
+    $('#sumOne').checked = state.sumOne;
+    document.querySelector(`input[name="mode"][value="${state.mode}"]`).checked = true;
+    $('#rfPol').value = state.rfPol;
+    $('#g-free').hidden = state.mode !== 'free';
+    $('#g-rf').hidden = state.mode !== 'rf';
+  }
+
+  function updateExtras() {
+    extras.h.textContent = '(μ₀H = ' + num(state.h * state.ms * 1000, 0) + ' mT)';
+    const toGHz = GAMMA_GHZ_PER_T * state.ms;
+    extras.rfRatio.textContent = '(' + num(state.rfRatio * w0() * toGHz, 2) + ' GHz)';
+    extras.alpha.textContent = '';
+  }
+
+  function setN(idx, val) {
+    const N = state.N;
+    val = clamp(val, 0, 1);
+    N[idx] = val;
+    if (!state.sumOne) return;
+    const rest = 1 - val;
+    const o = [0, 1, 2].filter((i) => i !== idx);
+    const s = N[o[0]] + N[o[1]];
+    if (s > 1e-9) { N[o[0]] *= rest / s; N[o[1]] *= rest / s; }
+    else { N[o[0]] = N[o[1]] = rest / 2; }
+  }
+
+  function onSlider(s) {
+    const inp = inputs[s.key];
+    const raw = parseFloat(inp.value);
+    const v = s.log ? s.lo * Math.pow(s.hi / s.lo, raw) : raw;
+    if (s.idx !== undefined) setN(s.idx, v); else state[s.key] = v;
+    if (GEOMETRY_KEYS.has(s.key)) $('#preset').value = 'custom';
+    syncUI();
+    if (RESTART_KEYS.has(s.key)) restart(); else refreshReadouts();
+  }
+
+  function applyPreset(name) {
+    const p = PRESETS[name];
+    if (!p) return;
+    state.N = p.N.slice();
+    state.h = p.h; state.thH = p.thH; state.phH = p.phH;
+    state.sumOne = true;
+    syncUI();
+    restart();
+  }
+
+  // ------------------------------------------------------------------
+  // Key figures
+  // ------------------------------------------------------------------
+  const resEl = $('#res'), warnEl = $('#warn');
+
+  function fmtTime(ns) {
+    if (!isFinite(ns)) return '–';
+    if (ns >= 1000) return num(ns / 1000, 2) + ' µs';
+    if (ns >= 10) return num(ns, 0) + ' ns';
+    if (ns >= 0.1) return num(ns, 2) + ' ns';
+    return num(ns * 1000, 1) + ' ps';
+  }
+
+  function refreshReadouts() {
+    if (!eq) return;
+    updateExtras();
+    const toGHz = GAMMA_GHZ_PER_T * state.ms;
+    const m0 = eq.m0;
+    const th0 = Math.acos(clamp(m0[2], -1, 1)) / DEG;
+    let ph0 = Math.atan2(m0[1], m0[0]) / DEG; if (ph0 < 0) ph0 += 360;
+    const rows = [];
+    const onAxis = th0 < 0.05 || th0 > 179.95;
+    rows.push([onAxis ? 'Equilibrium m₀ (θ)' : 'Equilibrium m₀ (θ, φ)',
+               onAxis ? num(th0, 1) + '°' : num(th0, 1) + '°, ' + num(ph0, 1) + '°']);
+
+    if (eq.ok) {
+      const W0 = Math.sqrt(eq.det);
+      const G = gammaDecay();
+      const al = state.alpha;
+      const wd2 = eq.det / (1 + al*al) - G*G;
+      const unitNs = PS_PER_UNIT_T / state.ms / 1000;
+      rows.push(['Resonance ω₀ / (γμ₀Mₛ)', num(W0, 3)]);
+      rows.push(['Resonance frequency f₀', num(W0 * toGHz, 2) + ' GHz']);
+      rows.push(['Damped frequency f_d', wd2 > 0 ? num(Math.sqrt(wd2) * toGHz, 2) + ' GHz' : 'overdamped']);
+      rows.push(['Orbit axis ratio', num(Math.sqrt(eq.lamMax / eq.lamMin), 2) + ' : 1']);
+      rows.push(['Decay time τ = 1/Γ', fmtTime(unitNs / G)]);
+      rows.push(['Quality factor Q = ω₀ / 2Γ', G > 0 ? num(W0 / (2 * G), 1) : '–']);
+      if (Math.abs(m0[2]) > 0.99999) {
+        const k = Math.sqrt(Math.max(0, (state.h + state.N[0] - state.N[2]) * (state.h + state.N[1] - state.N[2])));
+        rows.push(['Kittel formula (m₀ ∥ z)', num(k, 3)]);
+      }
+      warnEl.hidden = true;
+    } else {
+      warnEl.hidden = false;
+      warnEl.textContent = 'The equilibrium is not unique: the energy is flat in at least one direction (for example at h = 0, or for a rotationally symmetric geometry at small field). There is no well-defined resonance frequency, but the simulation still shows the dynamics.';
+    }
+    resEl.innerHTML = '';
+    for (const [k, v] of rows) {
+      const dt = document.createElement('dt'); dt.textContent = k;
+      const dd = document.createElement('dd'); dd.textContent = v;
+      resEl.append(dt, dd);
+    }
+
+    $('#hint2d').textContent = state.mode === 'free'
+      ? (eq.ok ? 'Dashed: undamped orbit (small deflection). e₁ is the soft direction.' : '')
+      : 'Driven case: the orbit grows until drive and damping balance.';
+    $('#hintTr').textContent = state.mode === 'free' && eq.ok
+      ? 'Dashed: exponential envelope exp(−Γt) from linear theory.'
+      : '';
+  }
+
+  // ------------------------------------------------------------------
+  // Zeichnen
+  // ------------------------------------------------------------------
+  const C = {};
+  let FONT = 'serif';
+  const levels = 40;
+  let orbitLevels = [];
+
+  function hexToRgb(hex) {
+    hex = hex.trim().replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map((c) => c + c).join('');
+    return [parseInt(hex.slice(0, 2), 16), parseInt(hex.slice(2, 4), 16), parseInt(hex.slice(4, 6), 16)];
+  }
+  const rgba = (rgb, a) => `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`;
+
+  function readColors() {
+    const cs = getComputedStyle(document.documentElement);
+    for (const k of ['ink', 'muted', 'rule', 'orbit', 'field', 'plot', 'grid', 'grid-strong', 'panel']) {
+      C[k] = hexToRgb(cs.getPropertyValue('--' + k));
+    }
+    FONT = getComputedStyle(document.body).fontFamily;
+    orbitLevels = [];
+    for (let i = 0; i <= levels; i++) orbitLevels.push(rgba(C.orbit, (i / levels).toFixed(3)));
+  }
+
+  function fit(canvas) {
+    const r = canvas.getBoundingClientRect();
+    const d = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.max(1, Math.round(r.width * d)), h = Math.max(1, Math.round(r.height * d));
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+    return { ctx, w: r.width, h: r.height };
+  }
+
+  // ---- 3D ----
+  const cv3 = $('#c3d');
+  const VIEW0 = { yaw: 0.75, pitch: 0.42, zoom: 1 };
+  const view = Object.assign({}, VIEW0);
+
+  function makeProj(cx, cy, S) {
+    const cyw = Math.cos(view.yaw), syw = Math.sin(view.yaw), cp = Math.cos(view.pitch), sp = Math.sin(view.pitch);
+    return (q) => {
+      const p = [Fm[0][0]*q[0] + Fm[0][1]*q[1] + Fm[0][2]*q[2],
+                 Fm[1][0]*q[0] + Fm[1][1]*q[1] + Fm[1][2]*q[2],
+                 Fm[2][0]*q[0] + Fm[2][1]*q[1] + Fm[2][2]*q[2]];
+      const x1 = p[0]*cyw - p[1]*syw, y1 = p[0]*syw + p[1]*cyw, z1 = p[2];
+      return [cx + x1 * S, cy - (y1*sp + z1*cp) * S, y1*cp - z1*sp];
+    };
+  }
+  const depthFactor = (d) => clamp(0.5 - 0.5 * d / 1.4, 0, 1);   // 1 = vorne
+
+  const pxA = new Float32Array(CAP), pyA = new Float32Array(CAP), pdA = new Float32Array(CAP);
+
+  function draw3d() {
+    const { ctx, w, h } = fit(cv3);
+    ctx.clearRect(0, 0, w, h);
+    const S = Math.min(w, h) * 0.34 * view.zoom, cx = w / 2, cy = h / 2;
+    const P = makeProj(cx, cy, S);
+
+    // Sphere
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = rgba(C.ink, 0.35);
+    ctx.beginPath(); ctx.arc(cx, cy, S, 0, TAU); ctx.stroke();
+
+    const seg = 96;
+    for (let pl = 0; pl < 3; pl++) {
+      const front = new Path2D(), back = new Path2D();
+      let prev = null;
+      for (let i = 0; i <= seg; i++) {
+        const a = i / seg * TAU, c = Math.cos(a), s = Math.sin(a);
+        const p = pl === 0 ? [c, s, 0] : (pl === 1 ? [c, 0, s] : [0, c, s]);
+        const q = P(p);
+        if (prev) {
+          const target = (q[2] + prev[2]) / 2 < 0 ? front : back;
+          target.moveTo(prev[0], prev[1]); target.lineTo(q[0], q[1]);
+        }
+        prev = q;
+      }
+      ctx.strokeStyle = rgba(C.ink, 0.07); ctx.stroke(back);
+      ctx.strokeStyle = rgba(C.ink, 0.24); ctx.stroke(front);
+    }
+
+    // Axes
+    ctx.font = `italic 16px ${FONT}`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const axes = [[1, 0, 0, 'x'], [0, 1, 0, 'y'], [0, 0, 1, 'z']];
+    for (const [ax, ay, az, name] of axes) {
+      const a = P([-1.3*ax, -1.3*ay, -1.3*az]), b = P([1.3*ax, 1.3*ay, 1.3*az]), l = P([1.46*ax, 1.46*ay, 1.46*az]);
+      ctx.strokeStyle = rgba(C.ink, 0.45); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+      ctx.fillStyle = rgba(C.ink, 0.45 + 0.5 * depthFactor(l[2]));
+      ctx.fillText(name, l[0], l[1]);
+    }
+
+    // Field
+    if (state.h > 1e-6) {
+      const hd = norm(H0);
+      const o = P([0, 0, 0]), tip = P([1.6*hd[0], 1.6*hd[1], 1.6*hd[2]]);
+      ctx.strokeStyle = rgba(C.field, 0.9); ctx.fillStyle = rgba(C.field, 0.9); ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(o[0], o[1]); ctx.lineTo(tip[0], tip[1]); ctx.stroke();
+      const ang = Math.atan2(tip[1] - o[1], tip[0] - o[0]);
+      ctx.beginPath();
+      ctx.moveTo(tip[0], tip[1]);
+      ctx.lineTo(tip[0] - 12*Math.cos(ang - 0.4), tip[1] - 12*Math.sin(ang - 0.4));
+      ctx.lineTo(tip[0] - 12*Math.cos(ang + 0.4), tip[1] - 12*Math.sin(ang + 0.4));
+      ctx.closePath(); ctx.fill();
+      ctx.font = `italic 17px ${FONT}`;
+      ctx.fillText('H', tip[0] + 14*Math.cos(ang), tip[1] + 14*Math.sin(ang));
+    }
+
+    // Orbit
+    const L = visibleCount();
+    if (L > 1) {
+      for (let k = 0; k < L; k++) {
+        const i = slot(k, L);
+        const p = P([rx[i], ry[i], rz[i]]);
+        pxA[k] = p[0]; pyA[k] = p[1]; pdA[k] = p[2];
+      }
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      for (let k = 1; k < L; k++) {
+        const a = k / (L - 1);
+        const f = depthFactor((pdA[k] + pdA[k - 1]) / 2);
+        const alpha = (0.04 + 0.96 * Math.pow(a, 1.5)) * (0.4 + 0.6 * f);
+        ctx.strokeStyle = orbitLevels[Math.round(clamp(alpha, 0, 1) * levels)];
+        ctx.lineWidth = 1 + 1.6 * a;
+        ctx.beginPath(); ctx.moveTo(pxA[k - 1], pyA[k - 1]); ctx.lineTo(pxA[k], pyA[k]); ctx.stroke();
+      }
+    }
+
+    // Equilibrium m0
+    if (eq) {
+      const q = P(eq.m0);
+      ctx.strokeStyle = rgba(C.ink, 0.85); ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(q[0], q[1], 7, 0, TAU); ctx.stroke();
+      ctx.fillStyle = rgba(C.ink, 0.85); ctx.font = `italic 15px ${FONT}`;
+      ctx.textAlign = 'left'; ctx.fillText('m₀', q[0] + 11, q[1] - 10);
+      ctx.textAlign = 'center';
+    }
+
+    // Magnetization vector
+    const o = P([0, 0, 0]), tip = P(m);
+    ctx.strokeStyle = rgba(C.ink, 0.8); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(o[0], o[1]); ctx.lineTo(tip[0], tip[1]); ctx.stroke();
+    ctx.fillStyle = rgba(C.orbit, 0.22);
+    ctx.beginPath(); ctx.arc(tip[0], tip[1], 12, 0, TAU); ctx.fill();
+    ctx.fillStyle = rgba(C.orbit, 1);
+    ctx.beginPath(); ctx.arc(tip[0], tip[1], 6, 0, TAU); ctx.fill();
+    ctx.strokeStyle = rgba(C.plot, 1); ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = rgba(C.ink, 0.9); ctx.font = `italic 16px ${FONT}`;
+    ctx.textAlign = 'left'; ctx.fillText('m', tip[0] + 12, tip[1] + 14);
+  }
+
+  // Rotate and zoom
+  let drag = null;
+  cv3.addEventListener('pointerdown', (e) => {
+    drag = { x: e.clientX, y: e.clientY };
+    cv3.setPointerCapture(e.pointerId); cv3.classList.add('dragging');
+  });
+  cv3.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    view.yaw += (e.clientX - drag.x) * 0.008;
+    view.pitch = clamp(view.pitch + (e.clientY - drag.y) * 0.008, -1.5, 1.5);
+    drag.x = e.clientX; drag.y = e.clientY;
+  });
+  const endDrag = () => { drag = null; cv3.classList.remove('dragging'); };
+  cv3.addEventListener('pointerup', endDrag);
+  cv3.addEventListener('pointercancel', endDrag);
+  cv3.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    view.zoom = clamp(view.zoom * Math.exp(-e.deltaY * 0.001), 0.6, 2.5);
+  }, { passive: false });
+  cv3.addEventListener('dblclick', () => Object.assign(view, VIEW0));
+
+  // ---- Plot helpers ----
+  function plotBackground(ctx, x0, y0, x1, y1, nx, ny) {
+    ctx.fillStyle = rgba(C.plot, 1);
+    ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= nx; i++) {
+      const x = x0 + (x1 - x0) * i / nx;
+      ctx.strokeStyle = rgba(C['grid'], 1);
+      ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
+    }
+    for (let j = 0; j <= ny; j++) {
+      const y = y0 + (y1 - y0) * j / ny;
+      ctx.strokeStyle = rgba(C['grid'], 1);
+      ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+    }
+  }
+
+  function currentAmp(L) {
+    let a = 0.02;
+    for (let k = 0; k < L; k++) {
+      const i = slot(k, L);
+      const p = [rx[i], ry[i], rz[i]];
+      a = Math.max(a, Math.abs(dot(p, eq.e1)), Math.abs(dot(p, eq.e2)));
+    }
+    return a * 1.15;
+  }
+
+  // ---- 2D: Projektion senkrecht zu m0 ----
+  const cv2 = $('#c2d');
+  function draw2d() {
+    const { ctx, w, h } = fit(cv2);
+    ctx.clearRect(0, 0, w, h);
+    const L = visibleCount();
+    const amp = currentAmp(L);
+    const pad = 22, cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2 - pad;
+    plotBackground(ctx, cx - R, cy - R, cx + R, cy + R, 8, 8);
+    ctx.strokeStyle = rgba(C['grid-strong'], 1); ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.stroke();
+    ctx.strokeStyle = rgba(C.ink, 0.35); ctx.lineWidth = 1;
+    ctx.strokeRect(cx - R, cy - R, 2 * R, 2 * R);
+
+    ctx.font = `italic 14px ${FONT}`; ctx.fillStyle = rgba(C.muted, 1);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText('u₁ = m·e₁', cx + R - 62, cy - 6);
+    ctx.fillText('u₂ = m·e₂', cx + 6, cy - R + 16);
+    ctx.textAlign = 'right';
+    ctx.fillText('±' + num(amp, amp < 0.1 ? 3 : 2), cx + R - 4, cy + R - 6);
+
+    const X = (u) => cx + u / amp * R, Y = (u) => cy - u / amp * R;
+
+    if (state.mode === 'free' && eq.ok) {
+      const a1 = Math.sin(state.kick * DEG), a2 = a1 * Math.sqrt(eq.lamMin / eq.lamMax);
+      ctx.setLineDash([5, 4]); ctx.strokeStyle = rgba(C.ink, 0.55); ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.ellipse(cx, cy, a1 / amp * R, a2 / amp * R, 0, 0, TAU); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    if (L > 1) {
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      let pu = 0, pv = 0;
+      for (let k = 0; k < L; k++) {
+        const i = slot(k, L), p = [rx[i], ry[i], rz[i]];
+        const u = dot(p, eq.e1), v = dot(p, eq.e2);
+        if (k > 0) {
+          const a = k / (L - 1);
+          ctx.strokeStyle = orbitLevels[Math.round((0.05 + 0.95 * Math.pow(a, 1.4)) * levels)];
+          ctx.lineWidth = 1 + 1.4 * a;
+          ctx.beginPath(); ctx.moveTo(X(pu), Y(pv)); ctx.lineTo(X(u), Y(v)); ctx.stroke();
+        }
+        pu = u; pv = v;
+      }
+      ctx.fillStyle = rgba(C.orbit, 1);
+      ctx.beginPath(); ctx.arc(X(pu), Y(pv), 5, 0, TAU); ctx.fill();
+    }
+  }
+
+  // ---- Zeitverlauf ----
+  const cvT = $('#ctr');
+  function niceStep(range) {
+    const raw = range / 5, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+    return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * p;
+  }
+
+  function drawTrace() {
+    const { ctx, w, h } = fit(cvT);
+    ctx.clearRect(0, 0, w, h);
+    const l = 40, r = 10, tp = 10, b = 26;
+    const x0 = l, x1 = w - r, y0 = tp, y1 = h - b;
+    const L = visibleCount();
+    const amp = currentAmp(L);
+    plotBackground(ctx, x0, y0, x1, y1, 10, 4);
+    const ymid = (y0 + y1) / 2;
+    ctx.strokeStyle = rgba(C['grid-strong'], 1); ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(x0, ymid); ctx.lineTo(x1, ymid); ctx.stroke();
+    ctx.strokeStyle = rgba(C.ink, 0.35); ctx.lineWidth = 1; ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+
+    const Y = (u) => ymid - u / amp * (y1 - y0) / 2;
+    ctx.font = `italic 13px ${FONT}`; ctx.fillStyle = rgba(C.muted, 1);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillText('+' + num(amp, amp < 0.1 ? 3 : 2), x0 - 5, y0 + 6);
+    ctx.fillText('−' + num(amp, amp < 0.1 ? 3 : 2), x0 - 5, y1 - 6);
+    ctx.fillText('0', x0 - 5, ymid);
+
+    if (L < 2) return;
+    const tA = rt[slot(0, L)], tB = rt[slot(L - 1, L)];
+    const span = Math.max(tB - tA, 1e-6);
+    const X = (tt) => x0 + (tt - tA) / span * (x1 - x0);
+
+    // Time axis in ns
+    const toNs = PS_PER_UNIT_T / state.ms / 1000;
+    const step = niceStep(span * toNs);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    const first = Math.ceil(tA * toNs / step) * step;
+    for (let tn = first; tn <= tB * toNs + 1e-12; tn += step) {
+      const x = X(tn / toNs);
+      ctx.strokeStyle = rgba(C['grid-strong'], 1); ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x, y1 + 4); ctx.stroke();
+      ctx.fillText(sig(tn, 3), x, y1 + 6);
+    }
+    ctx.textAlign = 'right'; ctx.fillText('t / ns', x1, y1 + 6 - 0);
+
+    // Envelopes (free decay, linear theory)
+    if (state.mode === 'free' && eq.ok) {
+      const G = gammaDecay();
+      const a1 = Math.sin(state.kick * DEG), a2 = a1 * Math.sqrt(eq.lamMin / eq.lamMax);
+      ctx.setLineDash([4, 4]); ctx.lineWidth = 1.2;
+      for (const [A, col] of [[a1, C.orbit], [a2, C.field]]) {
+        ctx.strokeStyle = rgba(col, 0.6);
+        for (const sgn of [1, -1]) {
+          ctx.beginPath();
+          for (let i = 0; i <= 60; i++) {
+            const tt = tA + span * i / 60, yv = sgn * A * Math.exp(-G * tt);
+            const x = X(tt), y = clamp(Y(yv), y0, y1);
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+      }
+      ctx.setLineDash([]);
+    }
+
+    // Curves u1, u2
+    const stride = Math.max(1, Math.floor(L / 1200));
+    for (const [e, col] of [[eq.e2, C.field], [eq.e1, C.orbit]]) {
+      ctx.strokeStyle = rgba(col, 1); ctx.lineWidth = 1.8; ctx.lineJoin = 'round';
+      ctx.beginPath();
+      for (let k = 0; k < L; k += stride) {
+        const i = slot(k, L);
+        const x = X(rt[i]), y = Y(rx[i]*e[0] + ry[i]*e[1] + rz[i]*e[2]);
+        if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    // Legend
+    ctx.font = `italic 14px ${FONT}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = rgba(C.orbit, 1); ctx.fillText('u₁', x0 + 8, y0 + 12);
+    ctx.fillStyle = rgba(C.field, 1); ctx.fillText('u₂', x0 + 34, y0 + 12);
+  }
+
+  // ------------------------------------------------------------------
+  // Main loop
+  // ------------------------------------------------------------------
+  let last = performance.now();
+  function frame(now) {
+    const dtFrame = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    if (!state.paused && eq) advance(dtFrame);
+    draw3d(); draw2d(); drawTrace();
+    requestAnimationFrame(frame);
+  }
+
+  // ------------------------------------------------------------------
+  // Start
+  // ------------------------------------------------------------------
+  buildSliders();
+  readColors();
+  if (window.matchMedia) {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    (mq.addEventListener ? mq.addEventListener.bind(mq, 'change') : mq.addListener.bind(mq))(readColors);
+  }
+
+  $('#preset').addEventListener('change', (e) => applyPreset(e.target.value));
+  $('#sumOne').addEventListener('change', (e) => {
+    state.sumOne = e.target.checked;
+    if (state.sumOne) {
+      const s = state.N[0] + state.N[1] + state.N[2];
+      state.N = s > 1e-9 ? state.N.map((v) => v / s) : [1/3, 1/3, 1/3];
+      $('#preset').value = 'custom';
+      syncUI(); restart();
+    }
+  });
+  document.querySelectorAll('input[name="mode"]').forEach((r) => r.addEventListener('change', () => {
+    state.mode = document.querySelector('input[name="mode"]:checked').value;
+    syncUI(); restart();
+  }));
+  $('#rfPol').addEventListener('change', (e) => { state.rfPol = e.target.value; });
+  $('#btnPause').addEventListener('click', () => {
+    state.paused = !state.paused;
+    $('#btnPause').textContent = state.paused ? 'Resume' : 'Pause';
+  });
+  $('#btnRestart').addEventListener('click', restart);
+  $('#btnClear').addEventListener('click', clearTrail);
+  $('#btnView').addEventListener('click', () => Object.assign(view, VIEW0));
+
+  $('#preset').value = 'filmIn';
+  applyPreset('filmIn');
+
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    for (let i = 0; i < 240; i++) advance(1 / 60);
+    state.paused = true;
+    $('#btnPause').textContent = 'Resume';
+  }
+
+  requestAnimationFrame((now) => { last = now; frame(now); });
+})();
+</script>
+</body>
+</html>

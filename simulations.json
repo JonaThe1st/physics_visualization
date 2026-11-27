@@ -19,5 +19,19 @@
     "desc": "Explore tight-binding bands for graphene, hBN, dichalcogenides, silicon and GaAs. Adjust model parameters and inspect band paths, k-plane maps and 3D surfaces.",
     "tags": ["solid-state physics", "band structure", "tight binding"],
     "on": true
+  },
+  {
+    "slug": "precessional-switching",
+    "title": "Precessional Switching (LLG)",
+    "desc": "Thin-film macrospin: drive the Landau-Lifshitz-Gilbert equation with a field along y (perpendicular to the initial M ∥ x) and in-plane anisotropy (easy axis x). Watch M precess around the effective field, follow the energy-conserving α=0 orbit, and see the h_K/2 switching threshold. Interactive 3D sphere.",
+    "tags": ["magnetism", "LLG", "precessional switching", "FMR"],
+    "on": true
+  },
+  {
+    "slug": "fmr-simulation",
+    "title": "FMR – Magnetization Precession",
+    "desc": "Ferromagnetic resonance: the magnetization precesses around the effective field until damping returns it to equilibrium. Pick a geometry (sphere, thin film, needle, ellipsoid), static field and damping, and watch the orbit in 3D or driven by an RF field. Shows the Kittel resonance frequency and decay time.",
+    "tags": ["magnetism", "FMR", "LLG", "Kittel"],
+    "on": true
   }
 ]
