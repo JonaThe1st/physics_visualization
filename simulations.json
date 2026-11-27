@@ -33,5 +33,12 @@
     "desc": "Ferromagnetic resonance: the magnetization precesses around the effective field until damping returns it to equilibrium. Pick a geometry (sphere, thin film, needle, ellipsoid), static field and damping, and watch the orbit in 3D or driven by an RF field. Shows the Kittel resonance frequency and decay time.",
     "tags": ["magnetism", "FMR", "LLG", "Kittel"],
     "on": true
+    },
+  {
+    "slug": "optical-bloch",
+    "title": "Optical Bloch Equations",
+    "desc": "Explore driven two-level dynamics with relaxation and dephasing. Watch the Bloch vector, populations and coherence for continuous drive, π pulses and Ramsey sequences.",
+    "tags": ["quantum optics", "two-level system", "Bloch sphere", "Ramsey"],
+    "on": true
   }
 ]
